@@ -1,13 +1,11 @@
-import SearchComponent from "./components/SearchComponent"
-import { mockProducts } from "./data/productsData"
+import SearchComponent from "./components/SearchComponent";
 
 function App() {
-
   return (
     <>
-      <SearchComponent products={mockProducts} />
+      <SearchComponent />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
