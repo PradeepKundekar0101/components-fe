@@ -1,13 +1,14 @@
 import { useCallback, useState } from "react";
-import { Search, SearchIcon } from "lucide-react";
+import { Search, SearchIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import axios from "axios";
 import React from "react";
 import debounce from "lodash/debounce";
-
+import { Button } from "@/components/ui/button";
 import ProductSkeleton from "@/components/ui/SkeletonLoading";
 import { sources } from "@/data";
 import SourceFilterDialog from "./ui/FilterDialog";
 import ProductItem from "./ui/ProductItem";
+
 export type ProductType = {
   objectID: string;
   productName: string;
@@ -21,6 +22,7 @@ export type ProductType = {
   productImage?: string;
 };
 
+const ITEMS_PER_PAGE = 10;
 const allSourceIds = sources.map((source) => source.id);
 
 const ComponentSearch = () => {
@@ -29,6 +31,8 @@ const ComponentSearch = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSources, setSelectedSources] =
     useState<string[]>(allSourceIds);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalHits, setTotalHits] = useState(0);
 
   const algoliaClient = axios.create({
     baseURL: `https://${import.meta.env.VITE_ALGOLIA_APP_ID}-dsn.algolia.net`,
@@ -40,14 +44,21 @@ const ComponentSearch = () => {
     timeout: 5000,
   });
 
-  const handleSearch = async (searchQuery: string, signal?: AbortSignal) => {
+  const handleSearch = async (
+    searchQuery: string,
+    page: number,
+    signal?: AbortSignal
+  ) => {
     try {
       if (selectedSources.length === 0) {
         setResults([]);
+        setTotalHits(0);
         return;
       }
+
       const filters = [];
       filters.push(`source:${selectedSources.join(" OR source:")}`);
+
       const response = await algoliaClient.post(
         `/1/indexes/Products/query`,
         {
@@ -66,10 +77,14 @@ const ComponentSearch = () => {
             "sourceImage",
           ],
           distinct: true,
+          hitsPerPage: ITEMS_PER_PAGE,
+          page,
         },
         { signal }
       );
+
       setResults(response.data.hits);
+      setTotalHits(response.data.nbHits);
     } catch (error) {
       if (axios.isCancel(error)) {
         console.log("Request cancelled");
@@ -82,36 +97,45 @@ const ComponentSearch = () => {
   };
 
   const debouncedSearch = useCallback(
-    debounce((searchQuery: string, signal?: AbortSignal) => {
+    debounce((searchQuery: string, page: number, signal?: AbortSignal) => {
       if (searchQuery.trim() !== "") {
         setIsLoading(true);
-        handleSearch(searchQuery, signal);
+        handleSearch(searchQuery, page, signal);
       } else {
         setResults([]);
+        setTotalHits(0);
         setIsLoading(false);
       }
     }, 300),
     [selectedSources]
   );
 
-  // Create a ref to store the current abort controller
   const abortControllerRef = React.useRef<AbortController | null>(null);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const searchQuery = event.target.value;
     setQuery(searchQuery);
+    setCurrentPage(0); // Reset to first page on new search
 
-    // Cancel previous request if it exists
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
 
-    // Create new abort controller for this request
     abortControllerRef.current = new AbortController();
-    debouncedSearch(searchQuery, abortControllerRef.current.signal);
+    debouncedSearch(searchQuery, 0, abortControllerRef.current.signal);
   };
 
-  // Clean up on unmount
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    abortControllerRef.current = new AbortController();
+    debouncedSearch(query, newPage, abortControllerRef.current.signal);
+  };
+
   React.useEffect(() => {
     return () => {
       if (abortControllerRef.current) {
@@ -121,16 +145,18 @@ const ComponentSearch = () => {
     };
   }, [debouncedSearch]);
 
-  // Effect to trigger search when filters change
   React.useEffect(() => {
     if (query.trim() !== "") {
+      setCurrentPage(0);
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
       abortControllerRef.current = new AbortController();
-      debouncedSearch(query, abortControllerRef.current.signal);
+      debouncedSearch(query, 0, abortControllerRef.current.signal);
     }
   }, [selectedSources]);
+
+  const totalPages = Math.ceil(totalHits / ITEMS_PER_PAGE);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -178,6 +204,7 @@ const ComponentSearch = () => {
                 ))}
               </div>
             )}
+
             {!isLoading && results.length === 0 && query.trim() !== "" && (
               <div className="text-center text-gray-500 p-4 flex flex-col items-center justify-center">
                 No components found matching your search.
@@ -185,15 +212,79 @@ const ComponentSearch = () => {
             )}
 
             {!isLoading && (
-              <div className="space-y-4 h-full overflow-y-auto">
+              <div className="space-y-4 h-full">
                 {query.length > 0 && (
-                  <h1 className="text-gray-600  text-xl font-semibold">
-                    {results.length} results found
-                  </h1>
+                  <div className="flex justify-between items-center">
+                    <h1 className="text-gray-600 text-xl font-semibold">
+                      {totalHits} results found
+                    </h1>
+                    <div className="text-sm text-gray-500">
+                      Page {currentPage + 1} of {totalPages}
+                    </div>
+                  </div>
                 )}
-                {results.map((product: ProductType) => (
-                  <ProductItem product={product} query={query} />
-                ))}
+
+                <div className="space-y-4">
+                  {results.map((product: ProductType) => (
+                    <ProductItem
+                      key={product.objectID}
+                      product={product}
+                      query={query}
+                    />
+                  ))}
+                </div>
+
+                {results.length > 0 && (
+                  <div className="flex justify-center gap-2 mt-6 pb-6">
+                    <Button
+                      variant="outline"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 0}
+                      className="flex items-center gap-1"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </Button>
+
+                    <div className="flex items-center gap-1">
+                      {[...Array(Math.min(5, totalPages))].map((_, index) => {
+                        let pageNumber;
+                        if (totalPages <= 5) {
+                          pageNumber = index;
+                        } else if (currentPage <= 2) {
+                          pageNumber = index;
+                        } else if (currentPage >= totalPages - 3) {
+                          pageNumber = totalPages - 5 + index;
+                        } else {
+                          pageNumber = currentPage - 2 + index;
+                        }
+
+                        return (
+                          <Button
+                            key={pageNumber}
+                            variant={
+                              currentPage === pageNumber ? "default" : "outline"
+                            }
+                            onClick={() => handlePageChange(pageNumber)}
+                            className="w-10"
+                          >
+                            {pageNumber + 1}
+                          </Button>
+                        );
+                      })}
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage >= totalPages - 1}
+                      className="flex items-center gap-1"
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
