@@ -171,7 +171,11 @@ const Navbar: React.FC = () => {
       <div className="bg-slate-100 text-black shadow h-16 flex items-center justify-center">
         <div className="w-full max-w-[1200px] flex items-center justify-between py-3 px-4 lg:px-0">
           <a href="https://components101.com" className="flex items-center">
-            <img src={img} alt="Logo" className=" scale-[4]" />
+            <img
+              src={img}
+              alt="Logo"
+              className=" sm:scale-1 md:scale-[1] lg:scale-[4] object-contain"
+            />
           </a>
           <div className="flex items-center space-x-10 lg:mx-28">
             <nav className="hidden lg:flex items-center space-x-4 text-[0.85rem] font-semibold text-slate-600">
