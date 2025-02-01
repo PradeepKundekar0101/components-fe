@@ -92,14 +92,14 @@ const ProductItem = ({
         </div>
 
         {/* Action Row */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-col md:flex-row">
           {/* Stock Status */}
-          <div className="bg-yellow-100 px-3 py-1.5 rounded-md text-sm">
+          <div className="bg-yellow-100 px-3 py-1.5 rounded-md text-sm w-full md:w-auto">
             Avl.Qty: In Stock
           </div>
 
           {/* Category */}
-          <div className="bg-blue-100 px-3 py-1.5 rounded-md text-sm">
+          <div className="bg-blue-100 px-3 py-1.5 rounded-md text-sm w-full md:w-auto">
             Category: {product.category.slice(0, 15)}...
           </div>
 
@@ -108,7 +108,7 @@ const ProductItem = ({
             <DialogTrigger asChild>
               <Button
                 variant="outline"
-                className="flex items-center gap-1.5 bg-green-100 border-none hover:bg-green-200"
+                className="flex md:items-center gap-1.5 bg-green-100 border-none hover:bg-green-200 w-full md:w-auto text-left md:text-center md:justify-center justify-start"
                 size="sm"
               >
                 <Bell className="h-4 w-4" />
@@ -178,10 +178,10 @@ const ProductItem = ({
             href={product.productUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-auto"
+            className="md:ml-auto sm:ml-0 w-full md:w-auto"
           >
             <Button
-              className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700"
+              className="flex items-center  bg-red-500 hover:bg-red-700 w-full md:w-auto text-left md:text-center md:justify-center justify-start"
               size="sm"
             >
               View Product
