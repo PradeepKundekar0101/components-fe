@@ -140,11 +140,10 @@ const ProductItem = ({
         <h2 className="text-base font-medium mb-2 pr-0 md:pr-10">
           {highlightText(product.productName, query)}
         </h2>
-
         {/* Price and Details */}
         <div className="flex items-center gap-2 mb-3">
           <span className="text-lg font-semibold">
-            ₹ {(Number(product.price) * 1.8).toFixed(2)}
+            ₹ {(Number(product.price) * 1.18).toFixed(2)}
             <span className="text-sm text-muted-foreground"> (Inc. GST)</span>
           </span>
 
@@ -161,21 +160,20 @@ const ProductItem = ({
             />
           </div>
         </div>
-
-        {/* Action Row */}
+        d{/* Action Row */}
         <div className="gap-2 grid grid-cols-2">
           {/* Stock Status */}
           <div className="bg-yellow-100 border-yellow-500 border px-3 py-1.5 rounded-md text-sm w-full md:w-auto">
-            Availability:{" "}
+            Availability:
             <span className="font-semibold">
               {isNaN(Number(product.stock))
-                ? product.stock
+                ? product.stock.charAt(0).toUpperCase() + product.stock.slice(1)
                 : `${product.stock} left`}
             </span>
           </div>
 
           {/* Category */}
-          <div className="bg-blue-100 px-3 py-1.5 border-blue-500 border rounded-md text-sm w-full md:w-auto">
+          {/* <div className="bg-blue-100 px-3 py-1.5 border-blue-500 border rounded-md text-sm w-full md:w-auto">
             Category:{" "}
             <span className="font-semibold">
               {window.innerWidth > 768
@@ -183,7 +181,7 @@ const ProductItem = ({
                 : product.category.slice(0, 10)}
               ...
             </span>
-          </div>
+          </div> */}
 
           <a
             href={product.productUrl}
