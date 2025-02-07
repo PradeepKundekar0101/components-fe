@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { freeShippingAbove, shippingFee } from "@/data";
 
 const ProductItem = ({
   product,
@@ -56,19 +57,19 @@ const ProductItem = ({
   return (
     <div
       key={product.objectID}
-      className="flex gap-4 bg-white p-4 border border-gray-200 hover:shadow-md transition-all duration-300 rounded-lg flex-col md:flex-row relative"
+      className="flex gap-4 bg-slate-50 p-4 border border-gray-200 hover:shadow-md transition-all duration-300 rounded-lg flex-row relative"
     >
       <Dialog>
         <DialogTrigger asChild>
           <Button
             variant="outline"
-            className="flex md:items-center gap-1.5 bg-gray-100 border-none hover:bg-gray-200 w-auto text-left md:text-center md:justify-center justify-start absolute top-2 right-2"
+            className="flex rounded-lg md:items-center  bg-gray-800 border-none hover:bg-gray-200 md:text-center md:justify-center justify-start absolute top-2 right-2 text-white"
             size="sm"
           >
-            <Bell className="h-4 w-4" />
+            <Bell className="h-2 w-2 md:h-4 md:w-4" />
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] bg-slate-50">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">
               Set Product Reminder
@@ -126,33 +127,37 @@ const ProductItem = ({
         </DialogContent>
       </Dialog>
       {/* Product Image */}
-      <div className="w-full h-32 md:w-24 md:h-24 flex items-center justify-center flex-shrink-0">
+      <div className="w-20 h-20 md:w-24 md:h-24 flex items-center justify-center flex-shrink-0 bg-slate-50">
         <img
           src={product.imageUrl || product.productImage}
           alt={product.productName}
-          className="object-contain max-w-full max-h-full"
+          className="object-contain max-w-full max-h-full rounded-lg"
         />
       </div>
 
-      {/* Product Info */}
       <div className="flex-grow">
-        {/* Product Name */}
-        <h2 className="text-base font-medium mb-2 pr-0 md:pr-10">
-          {highlightText(product.productName, query)}
+        <h2 className="font-medium mb-2 pr-10 text-xs md:text-sm">
+          {highlightText(
+            product.productName.length > 60
+              ? product.productName.slice(0, 60) + "..."
+              : product.productName,
+            query
+          )}
         </h2>
-        {/* Price and Details */}
+
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-lg font-semibold">
+          <span className="text-sm md:text-lg font-semibold">
             ₹ {(Number(product.price) * 1.18).toFixed(2)}
-            <span className="text-sm text-muted-foreground"> (Inc. GST)</span>
+            <span className="text-xs md:text-sm text-muted-foreground">
+              (Inc. GST)
+            </span>
           </span>
 
-          {/* Company Logo */}
           <div className="ml-auto">
             <img
               src={product.sourceImage}
               alt={product.source}
-              className={`h-8 w-28 object-contain rounded ${
+              className={`h-6 w-20 md:h-8 md:w-28 object-contain rounded ${
                 product.source === "evelta" || product.source === "sunrom"
                   ? "bg-black"
                   : "bg-white"
@@ -160,16 +165,36 @@ const ProductItem = ({
             />
           </div>
         </div>
-        d{/* Action Row */}
-        <div className="gap-2 grid grid-cols-2">
-          {/* Stock Status */}
-          <div className="bg-yellow-100 border-yellow-500 border px-3 py-1.5 rounded-md text-sm w-full md:w-auto">
-            Availability:
-            <span className="font-semibold">
+
+        <div className="gap-2 grid md:grid-cols-4 grid-cols-1">
+          <div className="bg-yellow-100 border-yellow-500 border px-3 border-dashed py-0.5 md:py-1.5 rounded-md text-xs md:text-sm w-full md:w-auto">
+            Availability: <br />
+            <span className="font-semibold ">
               {isNaN(Number(product.stock))
                 ? product.stock.charAt(0).toUpperCase() + product.stock.slice(1)
                 : `${product.stock} left`}
             </span>
+          </div>
+          <div>
+            <div className="bg-gray-100 border-gray-500 border border-dashed px-3 py-0.5 md:py-1.5 rounded-md md:text-sm w-full md:w-auto text-xs">
+              Shipping fee: <br />
+              <span className="font-semibold">
+                {shippingFee[product.source as keyof typeof shippingFee]}
+              </span>
+            </div>
+          </div>
+          <div>
+            <div className="bg-purple-100  text-xs border-purple-500 border px-3 border-dashed py-0.5 md:py-1.5 rounded-md md:text-sm w-full md:w-auto">
+              Free Shipping:
+              <br />
+              <span className="font-semibold">
+                {
+                  freeShippingAbove[
+                    product.source as keyof typeof freeShippingAbove
+                  ]
+                }
+              </span>
+            </div>
           </div>
 
           {/* Category */}
@@ -190,12 +215,13 @@ const ProductItem = ({
             className="w-full col-span-1"
           >
             <Button
-              className="flex items-center border text-white  bg-red-500 hover:bg-red-600 hover:text-white w-full  text-left md:text-center md:justify-center justify-start"
+              className="flex items-center border text-white  bg-red-500 hover:bg-red-600 hover:text-white w-full h-full  text-left md:text-center md:justify-center justify-start "
               size="sm"
             >
-              <span className="flex items-center font-semibold gap-1">
+              <span className="flex items-center font-semibold gap-1 py-2 md:py-0 text-xs md:text-sm">
                 View Product
               </span>
+
               <ExternalLink className="h-4 w-4" />
             </Button>
           </a>

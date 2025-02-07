@@ -8,6 +8,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { sources } from "@/data";
 import { Check, SlidersHorizontal } from "lucide-react";
+import { useEffect } from "react";
+import { sites } from "@/config";
 
 const SourceFilterDialog = ({
   selectedSources,
@@ -16,6 +18,10 @@ const SourceFilterDialog = ({
   selectedSources: string[];
   setSelectedSources: (sources: string[]) => void;
 }) => {
+  const allowedSources = sites.filter((site) => site.isAllowed);
+  const filteredSources = sources.filter((source) =>
+    allowedSources.some((site) => site.name === source.id)
+  );
   const toggleSource = (sourceId: string) => {
     setSelectedSources(
       selectedSources.includes(sourceId)
@@ -27,6 +33,9 @@ const SourceFilterDialog = ({
   const selectAll = () =>
     setSelectedSources(sources.map((source) => source.id));
   const clearAll = () => setSelectedSources([]);
+  useEffect(() => {
+    console.log(selectedSources);
+  }, [selectedSources]);
 
   return (
     <Dialog>
@@ -69,7 +78,7 @@ const SourceFilterDialog = ({
           </div>
 
           <div className="grid gap-3">
-            {sources.map((source) => (
+            {filteredSources.map((source) => (
               <div
                 key={source.id}
                 onClick={() => toggleSource(source.id)}

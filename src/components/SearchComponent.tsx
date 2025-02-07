@@ -8,7 +8,7 @@ import ProductSkeleton from "@/components/ui/SkeletonLoading";
 import { sources } from "@/data";
 import SourceFilterDialog from "./ui/FilterDialog";
 import ProductItem from "./ui/ProductItem";
-
+import { sites } from "@/config";
 export type ProductType = {
   objectID: string;
   productName: string;
@@ -56,8 +56,24 @@ const ComponentSearch = () => {
         return;
       }
 
+      // Get the list of allowed sources
+      const allowedSources = sites
+        .filter((site) => site.isAllowed)
+        .map((site) => site.name);
+
+      // Create filter for allowed sources that are also selected
+      const selectedAllowedSources = selectedSources.filter((source) =>
+        allowedSources.includes(source)
+      );
+
+      if (selectedAllowedSources.length === 0) {
+        setResults([]);
+        setTotalHits(0);
+        return;
+      }
+
       const filters = [];
-      filters.push(`source:${selectedSources.join(" OR source:")}`);
+      filters.push(`source:${selectedAllowedSources.join(" OR source:")}`);
 
       const response = await algoliaClient.post(
         `/1/indexes/Products/query`,
