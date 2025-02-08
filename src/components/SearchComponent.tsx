@@ -9,6 +9,7 @@ import { sources } from "@/data";
 import SourceFilterDialog from "./ui/FilterDialog";
 import ProductItem from "./ui/ProductItem";
 import { sites } from "@/config";
+import { WishlistDrawer } from "./Wishlist";
 export type ProductType = {
   objectID: string;
   productName: string;
@@ -187,10 +188,13 @@ const ComponentSearch = () => {
                 Components Search
               </h1>
             </div>
-            <SourceFilterDialog
-              selectedSources={selectedSources}
-              setSelectedSources={setSelectedSources}
-            />
+            <div className="flex items-center gap-2">
+              <SourceFilterDialog
+                selectedSources={selectedSources}
+                setSelectedSources={setSelectedSources}
+              />
+              <WishlistDrawer />
+            </div>
           </div>
 
           <div className="relative mb-6">

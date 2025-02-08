@@ -1,14 +1,15 @@
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import SearchComponent from "./components/SearchComponent";
+import { WishlistProvider } from "./components/Wishlist";
 
 function App() {
   return (
-    <>
-      <Navbar/>
+    <WishlistProvider>
+      <Navbar />
       <SearchComponent />
-      <Footer/>
-    </>
+      <Footer />
+    </WishlistProvider>
   );
 }
 
