@@ -57,7 +57,10 @@ export const WishlistDrawer = () => {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2 relative">
+        <Button
+          variant="outline"
+          className="flex items-center justify-center w-full gap-2 relative"
+        >
           <Heart className="h-4 w-4" />
           Wishlist
           {likedProducts.length > 0 && (
@@ -145,23 +148,23 @@ export const LikeButton = ({ product }: { product: ProductType }) => {
         flex rounded-full md:items-center
         ${
           isLiked
-            ? "bg-red-500 text-white hover:bg-red-600 hover:text-white"
+            ? " text-white hover:text-white"
             : "bg-white text-gray-600 hover:bg-gray-100"
         }
-        border shadow-sm hover:shadow-md
-        md:text-center md:justify-center justify-start 
-        absolute top-2 right-14
-        h-8 w-8 p-0
+        md:text-center md:justify-center justify-center 
+         p-0
         transition-all duration-200 ease-in-out
         transform hover:scale-105
+        hover:bg-transparent
       `}
       size="sm"
       onClick={toggleLike}
     >
       <Heart
         className="h-4 w-4"
-        fill={isLiked ? "currentColor" : "none"}
+        fill={isLiked ? "red" : "grey"}
         strokeWidth={2}
+        stroke={isLiked ? "red" : "grey"}
       />
     </Button>
   );

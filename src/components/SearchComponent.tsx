@@ -27,7 +27,7 @@ const ITEMS_PER_PAGE = 10;
 const allSourceIds = sources.map((source) => source.id);
 
 const ComponentSearch = () => {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState("a");
   const [results, setResults] = useState<ProductType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSources, setSelectedSources] =
@@ -176,9 +176,9 @@ const ComponentSearch = () => {
   const totalPages = Math.ceil(totalHits / ITEMS_PER_PAGE);
 
   return (
-    <div className="min-h-screen flex flex-col mt-32">
+    <div className="min-h-screen flex flex-col mt-32 overflow-x-hidden">
       <div className="flex-1">
-        <div className="max-w-3xl mx-auto p-4">
+        <div className="max-w-xl md:max-w-5xl mx-auto p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="text-red-600 text-2xl">
