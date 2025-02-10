@@ -40,7 +40,10 @@ const SourceFilterDialog = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
+        <Button
+          variant="outline"
+          className="gap-2 text-xs md:text-sm px-2 md:px-3 py-1 md:py-2"
+        >
           <SlidersHorizontal className="h-4 w-4" />
           Sources
           {selectedSources.length < sources.length && (

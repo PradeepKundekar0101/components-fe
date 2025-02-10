@@ -59,7 +59,7 @@ export const WishlistDrawer = () => {
       <SheetTrigger asChild>
         <Button
           variant="outline"
-          className="flex items-center justify-center w-full gap-2 relative"
+          className="flex items-center justify-center w-full gap-2 relative text-xs md:text-sm px-2 md:px-3 py-1 md:py-2"
         >
           <Heart className="h-4 w-4" />
           Wishlist

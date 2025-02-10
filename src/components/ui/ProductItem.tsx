@@ -39,13 +39,12 @@ const ProductItem = ({
     }, 1000);
   };
 
-  // Safely handle stock string conversion
   const stockString = (product.stock || "").toString();
 
   return (
     <div
       key={product.objectID}
-      className="flex gap-4 p-4 border border-gray-200 transition-all rounded-lg flex-row relative"
+      className="flex gap-2 md:gap-4 p-4 border border-gray-200 transition-all rounded-lg flex-row relative"
     >
       {showMoreData && (
         <div className="flex flex-col gap-2 absolute top-2 right-4">
@@ -105,7 +104,9 @@ const ProductItem = ({
                 : "text-gray-500"
             }`}
           >
-            {isNaN(Number(product.stock))
+            {stockString.toLocaleLowerCase() === "out"
+              ? "Out of stock"
+              : isNaN(Number(product.stock))
               ? stockString.charAt(0).toUpperCase() + stockString.slice(1)
               : `${product.stock} left`}
           </span>

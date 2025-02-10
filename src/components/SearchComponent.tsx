@@ -27,7 +27,7 @@ const ITEMS_PER_PAGE = 10;
 const allSourceIds = sources.map((source) => source.id);
 
 const ComponentSearch = () => {
-  const [query, setQuery] = useState("a");
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState<ProductType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSources, setSelectedSources] =
@@ -184,7 +184,7 @@ const ComponentSearch = () => {
               <div className="text-red-600 text-2xl">
                 <SearchIcon />
               </div>
-              <h1 className="text-red-600 text-2xl font-semibold">
+              <h1 className="text-red-600 text-md md:text-2xl font-semibold">
                 Components Search
               </h1>
             </div>
