@@ -149,7 +149,7 @@ export const LikeButton = ({ product }: { product: ProductType }) => {
         ${
           isLiked
             ? " text-white hover:text-white"
-            : "bg-white text-gray-600 hover:bg-gray-100"
+            : "bg-white text-gray-900 hover:bg-gray-100"
         }
         md:text-center md:justify-center justify-center 
          p-0
@@ -161,7 +161,7 @@ export const LikeButton = ({ product }: { product: ProductType }) => {
       onClick={toggleLike}
     >
       <Heart
-        className="h-4 w-4"
+        className="h-3 w-3 md:h-5 md:w-5"
         fill={isLiked ? "red" : "grey"}
         strokeWidth={2}
         stroke={isLiked ? "red" : "grey"}

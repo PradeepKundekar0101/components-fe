@@ -38,6 +38,12 @@ const ProductItem = ({
       setIsSubmitting(false);
     }, 1000);
   };
+  const isFreeShipping =
+    Number(product.price) >=
+    Number(freeShippingAbove[product.source as keyof typeof freeShippingAbove]);
+  const eligibleForFreeShipping =
+    freeShippingAbove[product.source as keyof typeof freeShippingAbove] ===
+    "999999999999";
 
   const stockString = (product.stock || "").toString();
 
@@ -74,7 +80,7 @@ const ProductItem = ({
       </div>
 
       <div className="flex-grow">
-        <h2 className="font-medium mb-1 pr-16 text-xs md:text-sm">
+        <h2 className="font-medium mb-1 pr-32 text-xs md:text-sm">
           {highlightText(
             product.productName?.length > 60
               ? product.productName.slice(0, 60) + "..."
@@ -115,7 +121,7 @@ const ProductItem = ({
         <div className="flex items-center gap-2 mb-1">
           <span className="text-sm md:text-lg font-semibold">
             ₹{" "}
-            {product.source === "quartz"
+            {product.source === "quartz" || product.source === "evelta"
               ? (Number(product.price) * 1.18).toFixed(2)
               : Number(product.price || 0).toFixed(2)}
             <span className="text-xs md:text-sm text-muted-foreground ml-1">
@@ -127,32 +133,32 @@ const ProductItem = ({
         <div className="flex justify-between items-center w-full">
           {showMoreData && (
             <div className="flex flex-col md:flex-row justify-start w-full">
-              <div className="text-xs rounded-none md:text-sm w-full md:w-auto flex items-center gap-2">
+              <div className="text-xs text-gray-500 rounded-none md:text-sm w-full md:w-auto flex items-center gap-2">
                 <span className="rounded-full bg-gray-500 h-2 w-2"></span>
-                <span className="text-gray-500">
-                  Shipping fee
-                  {" " +
-                    shippingFee[product.source as keyof typeof shippingFee]}
-                </span>
+                {!isFreeShipping && (
+                  <span className="">
+                    Shipping fee
+                    {" " +
+                      shippingFee[product.source as keyof typeof shippingFee]}
+                  </span>
+                )}
+                {isFreeShipping ? (
+                  <span>Free shipping</span>
+                ) : !eligibleForFreeShipping ? (
+                  <span>
+                    {` | Free above ₹${
+                      freeShippingAbove[
+                        product.source as keyof typeof freeShippingAbove
+                      ]
+                    }`}
+                  </span>
+                ) : (
+                  ""
+                )}
               </div>
 
               <div className="text-xs px-0 md:px-2 rounded-none md:text-sm w-full md:w-auto flex items-center gap-2">
-                <span
-                  className={`rounded-full h-2 w-2 ${
-                    freeShippingAbove[
-                      product.source as keyof typeof freeShippingAbove
-                    ] === ""
-                      ? "bg-white"
-                      : "bg-gray-500"
-                  }`}
-                ></span>
-                <span className="text-gray-500">
-                  {
-                    freeShippingAbove[
-                      product.source as keyof typeof freeShippingAbove
-                    ]
-                  }
-                </span>
+                <span className="text-gray-500"></span>
               </div>
             </div>
           )}
@@ -163,7 +169,7 @@ const ProductItem = ({
             rel="noopener noreferrer"
           >
             <Button
-              className="flex items-center border text-black bg-gray-200 hover:bg-gray-300 w-full h-8 text-left md:text-center md:justify-center justify-start shadow-none rounded-full px-1 md:px-3 gap-1 md:gap-2"
+              className="flex items-center border text-white bg-red-500 hover:bg-red-600 w-full h-8 text-left md:text-center md:justify-center justify-start shadow-none rounded-full px-1 md:px-3 gap-1 md:gap-2"
               size="sm"
             >
               <span className="flex items-center font-semibold gap-0 md:gap-1 text-xs md:text-sm">

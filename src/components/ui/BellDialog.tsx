@@ -30,10 +30,10 @@ const BellDialog = ({
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className="shadow-none px-0 rounded-full border-none  md:text-center text-gray-600"
+          className="shadow-none px-0 rounded-full border-none  md:text-center text-gray-900"
           size="sm"
         >
-          <Bell className="h-2 w-2 md:h-4 md:w-4" />
+          <Bell className="h-3 w-3 md:h-5 md:w-5" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] bg-slate-50">

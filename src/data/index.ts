@@ -19,11 +19,11 @@ export const shippingFee = {
 };
 
 export const freeShippingAbove = {
-  robu: "Free above ₹500",
-  robokit: "",
-  sunrom: "",
-  zbotic: "Free above ₹499",
-  evelta: "Free above ₹999",
-  robocraze: "Free above ₹500",
-  quartz: "Free above ₹500",
+  robu: "500",
+  robokit: "999999999999",
+  sunrom: "999999999999",
+  zbotic: "499",
+  evelta: "999",
+  robocraze: "500",
+  quartz: "500",
 };
