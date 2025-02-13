@@ -42,7 +42,13 @@ export const WishlistProvider = ({
   );
 };
 
-export const WishlistDrawer = () => {
+export const WishlistDrawer = ({
+  title,
+  showBadge,
+}: {
+  title: string;
+  showBadge: boolean;
+}) => {
   const { likedProducts, setLikedProducts } = React.useContext(WishlistContext);
   const [open, setOpen] = React.useState(false);
 
@@ -62,8 +68,8 @@ export const WishlistDrawer = () => {
           className="flex items-center justify-center w-full gap-2 relative text-xs md:text-sm px-2 md:px-3 py-1 md:py-2"
         >
           <Heart className="h-4 w-4" />
-          Wishlist
-          {likedProducts.length > 0 && (
+          {title}
+          {showBadge && likedProducts.length > 0 && (
             <Badge
               variant="secondary"
               className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white"

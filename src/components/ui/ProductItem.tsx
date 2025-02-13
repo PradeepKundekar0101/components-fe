@@ -16,7 +16,7 @@ const ProductItem = ({
   showMoreData?: boolean;
 }) => {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-
+  console.log(showMoreData);
   const highlightText = (text: string, query: string) => {
     if (!query) return text;
     const regex = new RegExp(`(${query})`, "gi");
@@ -80,7 +80,11 @@ const ProductItem = ({
       </div>
 
       <div className="flex-grow">
-        <h2 className="font-medium mb-1 pr-32 text-xs md:text-sm">
+        <h2
+          className={`font-medium mb-1 text-xs md:text-sm ${
+            !showMoreData ? "pr-10" : "pr-32"
+          }`}
+        >
           {highlightText(
             product.productName?.length > 60
               ? product.productName.slice(0, 60) + "..."

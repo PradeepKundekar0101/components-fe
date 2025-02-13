@@ -1,5 +1,12 @@
 import { useCallback, useState } from "react";
-import { Search, SearchIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Search,
+  SearchIcon,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  ShoppingCart,
+} from "lucide-react";
 import axios from "axios";
 import React from "react";
 import debounce from "lodash/debounce";
@@ -9,7 +16,10 @@ import { sources } from "@/data";
 import SourceFilterDialog from "./ui/FilterDialog";
 import ProductItem from "./ui/ProductItem";
 import { sites } from "@/config";
-import { WishlistDrawer } from "./Wishlist";
+import { WishlistContext, WishlistDrawer } from "./Wishlist";
+import FeatureCards from "./FeatureCards";
+import BrandList from "./BrandList";
+
 export type ProductType = {
   objectID: string;
   productName: string;
@@ -174,156 +184,222 @@ const ComponentSearch = () => {
   }, [selectedSources]);
 
   const totalPages = Math.ceil(totalHits / ITEMS_PER_PAGE);
+  const { likedProducts, setLikedProducts } = React.useContext(WishlistContext);
+
+  const removeFromWishlist = (productId: string) => {
+    const updatedProducts = likedProducts.filter(
+      (p) => p.objectID !== productId
+    );
+    setLikedProducts(updatedProducts);
+    localStorage.setItem("likedProducts", JSON.stringify(updatedProducts));
+  };
 
   return (
-    <div className="w-full flex">
-      <div className="w-[0%] md:w-[10%] overflow-x-hidden bg-gray-100 flex justify-center items-center">
-        <div className="bg-gray-200 rounded-lg px-4 py-2 text-slate-400">
-          Ads
+    <div className="w-full flex flex-col ">
+      <div className="flex flex-row">
+        <div className="w-[0%] md:w-[10%] overflow-x-hidden bg-gray-100 flex justify-center items-center">
+          <div className="bg-gray-200 rounded-lg px-4 py-2 text-slate-400">
+            Ads
+          </div>
         </div>
-      </div>
-      <div className="min-h-screen w-[100%] md:w-[50%] flex flex-col mt-32 overflow-x-hidden">
-        <div className="flex-1">
-          <div className="max-w-xl md:max-w-5xl mx-auto p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="text-red-600 text-2xl">
-                  <SearchIcon />
+        <div className="min-h-screen w-[100%] md:w-[50%] flex flex-col mt-32 overflow-x-hidden">
+          <div className="flex-1">
+            <div className="max-w-xl md:max-w-5xl mx-auto p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="text-red-600 text-2xl">
+                    <SearchIcon />
+                  </div>
+                  <h1 className="text-red-600 text-md md:text-2xl font-semibold">
+                    Components Search
+                  </h1>
                 </div>
-                <h1 className="text-red-600 text-md md:text-2xl font-semibold">
-                  Components Search
-                </h1>
-              </div>
-              <div className="flex items-center gap-2">
-                <SourceFilterDialog
-                  selectedSources={selectedSources}
-                  setSelectedSources={setSelectedSources}
-                />
-                <WishlistDrawer />
-              </div>
-            </div>
-
-            <div className="relative mb-6">
-              <input
-                type="text"
-                placeholder="Search components..."
-                value={query}
-                onChange={handleInputChange}
-                className="w-full p-2 pr-12 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-300"
-              />
-              <button className="absolute right-0 top-0 h-full px-4 bg-red-600 rounded-r hover:bg-red-700 transition-colors">
-                <Search className="h-5 w-5 text-white" />
-              </button>
-            </div>
-
-            <div className="h-full">
-              {query.length === 0 && (
-                <div className="text-center text-gray-500">
-                  Search for components...
-                </div>
-              )}
-
-              {isLoading && (
-                <div className="space-y-4">
-                  {[...Array(6)].map((_, index) => (
-                    <ProductSkeleton key={index} />
-                  ))}
-                </div>
-              )}
-
-              {!isLoading && results.length === 0 && query.trim() !== "" && (
-                <div className="text-center text-gray-500 p-4 flex flex-col items-center justify-center">
-                  No components found matching your search.
-                </div>
-              )}
-
-              {!isLoading && (
-                <div className="space-y-4 h-full">
-                  {query.length > 0 && (
-                    <div className="flex justify-between items-center">
-                      <h1 className="text-gray-600 text-xl font-semibold">
-                        {totalHits} results found
-                      </h1>
-                      <div className="text-sm text-gray-500">
-                        Page {currentPage + 1} of {totalPages}
-                      </div>
-                    </div>
+                <div className="flex items-center gap-2">
+                  <SourceFilterDialog
+                    selectedSources={selectedSources}
+                    setSelectedSources={setSelectedSources}
+                  />
+                  {window.innerWidth < 768 && (
+                    <WishlistDrawer title="Wishlist" showBadge={true} />
                   )}
+                </div>
+              </div>
 
+              <h1 className="text-gray-600 text-sm md:text-lg font-semibold my-3">
+                Find & Compare Electronic Components
+              </h1>
+              <div className="relative mb-6">
+                <input
+                  type="text"
+                  placeholder="Search components by name or part number"
+                  value={query}
+                  onChange={handleInputChange}
+                  className="w-full p-2 pr-12 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-300"
+                />
+                <button className="absolute right-0 top-0 h-full px-4 bg-red-600 rounded-r hover:bg-red-700 transition-colors">
+                  <Search className="h-5 w-5 text-white" />
+                </button>
+              </div>
+
+              <div className="h-full">
+                {query.length === 0 && (
+                  <div className="text-center text-gray-500">
+                    Search for components...
+                  </div>
+                )}
+
+                {isLoading && (
                   <div className="space-y-4">
-                    {results.map((product: ProductType) => (
-                      <ProductItem
-                        key={product.objectID}
-                        product={product}
-                        query={query}
-                      />
+                    {[...Array(6)].map((_, index) => (
+                      <ProductSkeleton key={index} />
                     ))}
                   </div>
+                )}
 
-                  {results.length > 0 && (
-                    <div className="flex justify-center gap-2 mt-6 pb-6">
-                      <Button
-                        variant="outline"
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 0}
-                        className="flex items-center gap-1"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                        Previous
-                      </Button>
+                {!isLoading && results.length === 0 && query.trim() !== "" && (
+                  <div className="text-center text-gray-500 p-4 flex flex-col items-center justify-center">
+                    No components found matching your search.
+                  </div>
+                )}
 
-                      <div className="flex items-center gap-1">
-                        {[...Array(Math.min(5, totalPages))].map((_, index) => {
-                          let pageNumber;
-                          if (totalPages <= 5) {
-                            pageNumber = index;
-                          } else if (currentPage <= 2) {
-                            pageNumber = index;
-                          } else if (currentPage >= totalPages - 3) {
-                            pageNumber = totalPages - 5 + index;
-                          } else {
-                            pageNumber = currentPage - 2 + index;
-                          }
-
-                          return (
-                            <Button
-                              key={pageNumber}
-                              variant={
-                                currentPage === pageNumber
-                                  ? "default"
-                                  : "outline"
-                              }
-                              onClick={() => handlePageChange(pageNumber)}
-                              className="w-10"
-                            >
-                              {pageNumber + 1}
-                            </Button>
-                          );
-                        })}
+                {!isLoading && (
+                  <div className="space-y-4 h-full">
+                    {query.length > 0 && (
+                      <div className="flex justify-between items-center">
+                        <h1 className="text-gray-600 text-xl font-semibold">
+                          {totalHits} results found
+                        </h1>
+                        <div className="text-sm text-gray-500">
+                          Page {currentPage + 1} of {totalPages}
+                        </div>
                       </div>
+                    )}
 
+                    <div className="space-y-4">
+                      {results.map((product: ProductType) => (
+                        <ProductItem
+                          key={product.objectID}
+                          product={product}
+                          query={query}
+                        />
+                      ))}
+                    </div>
+
+                    {results.length > 0 && (
+                      <div className="flex justify-center gap-2 mt-6 pb-6">
+                        <Button
+                          variant="outline"
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 0}
+                          className="flex items-center gap-1"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          Previous
+                        </Button>
+
+                        <div className="flex items-center gap-1">
+                          {[...Array(Math.min(5, totalPages))].map(
+                            (_, index) => {
+                              let pageNumber;
+                              if (totalPages <= 5) {
+                                pageNumber = index;
+                              } else if (currentPage <= 2) {
+                                pageNumber = index;
+                              } else if (currentPage >= totalPages - 3) {
+                                pageNumber = totalPages - 5 + index;
+                              } else {
+                                pageNumber = currentPage - 2 + index;
+                              }
+
+                              return (
+                                <Button
+                                  key={pageNumber}
+                                  variant={
+                                    currentPage === pageNumber
+                                      ? "default"
+                                      : "outline"
+                                  }
+                                  onClick={() => handlePageChange(pageNumber)}
+                                  className="w-10"
+                                >
+                                  {pageNumber + 1}
+                                </Button>
+                              );
+                            }
+                          )}
+                        </div>
+
+                        <Button
+                          variant="outline"
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage >= totalPages - 1}
+                          className="flex items-center gap-1"
+                        >
+                          Next
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="w-[0%] md:w-[40%] mt-32 overflow-x-hidden bg-white flex justify-center items-start md:border-l border-gray-200 px-2 ">
+          <div className="w-[400px] flex flex-col sm:w-[540px] overflow-y-auto">
+            {likedProducts.length !== 0 && (
+              <div className="mb-4">
+                <h1 className="text-xl font-bold">
+                  Your Wishlist ({likedProducts.length} items)
+                </h1>
+              </div>
+            )}
+            <div className="space-y-4">
+              {likedProducts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-4 py-8">
+                  <ShoppingCart className="h-16 w-16 text-gray-300" />
+                  <p className="text-center text-gray-500">
+                    Your wishlist is empty
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {likedProducts.slice(0, 5).map((product) => (
+                    <div key={product.objectID} className="relative">
+                      <div className="flex items-center justify-between">
+                        <ProductItem
+                          showMoreData={false}
+                          product={product}
+                          query=""
+                        />
+                      </div>
                       <Button
-                        variant="outline"
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage >= totalPages - 1}
-                        className="flex items-center gap-1"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute top-2 right-2 h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => removeFromWishlist(product.objectID)}
                       >
-                        Next
-                        <ChevronRight className="h-4 w-4" />
+                        <Heart className="h-5 w-5" fill="currentColor" />
                       </Button>
                     </div>
+                  ))}
+                  {likedProducts.length > 5 && (
+                    <div className="flex items-center justify-center">
+                      <WishlistDrawer
+                        title={`Show all ${likedProducts.length} items`}
+                        showBadge={false}
+                      />
+                    </div>
                   )}
-                </div>
+                </>
               )}
             </div>
           </div>
         </div>
       </div>
-      <div className="w-[0%] md:w-[40%] overflow-x-hidden bg-gray-100 flex justify-center items-center">
-        <div className="bg-gray-200 rounded-lg px-4 py-2 text-slate-400">
-          Ads
-        </div>
-      </div>
+      <FeatureCards />
+      <BrandList />
     </div>
   );
 };
