@@ -167,10 +167,10 @@ export const LikeButton = ({ product }: { product: ProductType }) => {
       onClick={toggleLike}
     >
       <Heart
-        className="h-3 w-3 md:h-5 md:w-5"
-        fill={isLiked ? "red" : "grey"}
+        className="h-3 w-3 md:h-6 md:w-6"
+        fill={isLiked ? "red" : "#292929"}
         strokeWidth={2}
-        stroke={isLiked ? "red" : "grey"}
+        stroke={isLiked ? "red" : "#292929"}
       />
     </Button>
   );

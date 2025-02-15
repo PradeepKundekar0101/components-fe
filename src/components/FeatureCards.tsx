@@ -10,7 +10,7 @@ interface Feature {
 
 const FeatureCard: React.FC<Feature> = ({ icon, title, description }) => (
   <div className="w-full bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-    <div className="pt-2 md:pt-6 ">
+    <div>
       <div className="flex flex-col space-y-2">
         <div className="flex items-center space-x-2">
           <div className="p-2 rounded-lg">{icon}</div>
@@ -51,14 +51,14 @@ const FeaturesSection = () => {
   ];
 
   return (
-    <div className="max-w-full  mx-auto px-4 py-4 md:px-32 md:py-10 border-t border-gray-200">
-      <p className="text-gray-600 text-sm md:text-base text-center mb-4 md:mb-8">
+    <div className="max-w-full  mx-auto px-4 py-4 md:px-3 md:py-5">
+      <p className="text-gray-800 text-sm md:text-base mb-4 md:mb-8">
         Ultra-fast search engine to instantly find electronic components,
         compare prices, and check real-time stock, GST-inclusive pricing, and
         shipping details from popular Indian Component Distributors—all in one
         place!
       </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
         {features.map((feature, index) => (
           <FeatureCard
             key={index}

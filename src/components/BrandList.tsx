@@ -36,7 +36,7 @@ const duplicatedBrands = [...brands, ...brands];
 
 const BrandCarousel = () => {
   return (
-    <div className="text-center p-6 bg-gray-100 rounded-lg py-24">
+    <div className=" p-6 bg-gray-100 rounded-lg py-2">
       <h2 className="text-xl font-semibold mb-4">
         Built for Engineers by Engineers
       </h2>

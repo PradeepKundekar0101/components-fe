@@ -50,7 +50,9 @@ const ProductItem = ({
   return (
     <div
       key={product.objectID}
-      className="flex gap-2 md:gap-4 p-4 border border-gray-200 transition-all rounded-lg flex-row relative"
+      className={`flex gap-2 md:gap-4 p-4 ${
+        showMoreData ? "border rounded-lg" : "border-b"
+      }  border-gray-200 transition-all  flex-row relative`}
     >
       {showMoreData && (
         <div className="flex flex-col gap-2 absolute top-2 right-4">

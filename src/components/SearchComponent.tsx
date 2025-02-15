@@ -241,108 +241,111 @@ const ComponentSearch = () => {
                 </button>
               </div>
 
-              <div className="h-full">
-                {query.length === 0 && (
-                  <div className="text-center text-gray-500">
-                    Search for components...
-                  </div>
-                )}
-
-                {isLoading && (
-                  <div className="space-y-4">
-                    {[...Array(6)].map((_, index) => (
-                      <ProductSkeleton key={index} />
-                    ))}
-                  </div>
-                )}
-
-                {!isLoading && results.length === 0 && query.trim() !== "" && (
-                  <div className="text-center text-gray-500 p-4 flex flex-col items-center justify-center">
-                    No components found matching your search.
-                  </div>
-                )}
-
-                {!isLoading && (
-                  <div className="space-y-4 h-full">
-                    {query.length > 0 && (
-                      <div className="flex justify-between items-center">
-                        <h1 className="text-gray-600 text-xl font-semibold">
-                          {totalHits} results found
-                        </h1>
-                        <div className="text-sm text-gray-500">
-                          Page {currentPage + 1} of {totalPages}
-                        </div>
-                      </div>
-                    )}
-
+              {query.length === 0 ? (
+                <>
+                  <FeatureCards />
+                  <BrandList />
+                </>
+              ) : (
+                <div className="h-full">
+                  {isLoading && (
                     <div className="space-y-4">
-                      {results.map((product: ProductType) => (
-                        <ProductItem
-                          key={product.objectID}
-                          product={product}
-                          query={query}
-                        />
+                      {[...Array(6)].map((_, index) => (
+                        <ProductSkeleton key={index} />
                       ))}
                     </div>
+                  )}
 
-                    {results.length > 0 && (
-                      <div className="flex justify-center gap-2 mt-6 pb-6">
-                        <Button
-                          variant="outline"
-                          onClick={() => handlePageChange(currentPage - 1)}
-                          disabled={currentPage === 0}
-                          className="flex items-center gap-1"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                          Previous
-                        </Button>
-
-                        <div className="flex items-center gap-1">
-                          {[...Array(Math.min(5, totalPages))].map(
-                            (_, index) => {
-                              let pageNumber;
-                              if (totalPages <= 5) {
-                                pageNumber = index;
-                              } else if (currentPage <= 2) {
-                                pageNumber = index;
-                              } else if (currentPage >= totalPages - 3) {
-                                pageNumber = totalPages - 5 + index;
-                              } else {
-                                pageNumber = currentPage - 2 + index;
-                              }
-
-                              return (
-                                <Button
-                                  key={pageNumber}
-                                  variant={
-                                    currentPage === pageNumber
-                                      ? "default"
-                                      : "outline"
-                                  }
-                                  onClick={() => handlePageChange(pageNumber)}
-                                  className="w-10"
-                                >
-                                  {pageNumber + 1}
-                                </Button>
-                              );
-                            }
-                          )}
-                        </div>
-
-                        <Button
-                          variant="outline"
-                          onClick={() => handlePageChange(currentPage + 1)}
-                          disabled={currentPage >= totalPages - 1}
-                          className="flex items-center gap-1"
-                        >
-                          Next
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
+                  {!isLoading &&
+                    results.length === 0 &&
+                    query.trim() !== "" && (
+                      <div className="text-center text-gray-500 p-4 flex flex-col items-center justify-center">
+                        No components found matching your search.
                       </div>
                     )}
-                  </div>
-                )}
-              </div>
+
+                  {!isLoading && (
+                    <div className="space-y-4 h-full">
+                      {query.length > 0 && (
+                        <div className="flex justify-between items-center">
+                          <h1 className="text-gray-600 text-xl font-semibold">
+                            {totalHits} results found
+                          </h1>
+                          <div className="text-sm text-gray-500">
+                            Page {currentPage + 1} of {totalPages}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="space-y-4">
+                        {results.map((product: ProductType) => (
+                          <ProductItem
+                            key={product.objectID}
+                            product={product}
+                            query={query}
+                          />
+                        ))}
+                      </div>
+
+                      {results.length > 0 && (
+                        <div className="flex justify-center gap-2 mt-6 pb-6">
+                          <Button
+                            variant="outline"
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 0}
+                            className="flex items-center gap-1"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                            Previous
+                          </Button>
+
+                          <div className="flex items-center gap-1">
+                            {[...Array(Math.min(5, totalPages))].map(
+                              (_, index) => {
+                                let pageNumber;
+                                if (totalPages <= 5) {
+                                  pageNumber = index;
+                                } else if (currentPage <= 2) {
+                                  pageNumber = index;
+                                } else if (currentPage >= totalPages - 3) {
+                                  pageNumber = totalPages - 5 + index;
+                                } else {
+                                  pageNumber = currentPage - 2 + index;
+                                }
+
+                                return (
+                                  <Button
+                                    key={pageNumber}
+                                    variant={
+                                      currentPage === pageNumber
+                                        ? "default"
+                                        : "outline"
+                                    }
+                                    onClick={() => handlePageChange(pageNumber)}
+                                    className="w-10"
+                                  >
+                                    {pageNumber + 1}
+                                  </Button>
+                                );
+                              }
+                            )}
+                          </div>
+
+                          <Button
+                            variant="outline"
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage >= totalPages - 1}
+                            className="flex items-center gap-1"
+                          >
+                            Next
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -397,9 +400,12 @@ const ComponentSearch = () => {
             </div>
           </div>
         </div>
+        <div className="w-[0%] md:w-[10%] overflow-x-hidden bg-gray-100 flex justify-center items-center">
+          <div className="bg-gray-200 rounded-lg px-4 py-2 text-slate-400">
+            Ads
+          </div>
+        </div>
       </div>
-      <FeatureCards />
-      <BrandList />
     </div>
   );
 };
