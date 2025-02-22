@@ -27,3 +27,13 @@ export const freeShippingAbove = {
   robocraze: "500",
   quartz: "500",
 };
+
+export const codInformation = {
+  robu: "CoD Available Above ₹300",
+  robokit: "CoD Not Available",
+  sunrom: "CoD Not Available",
+  zbotic: "CoD Not Available",
+  evelta: "CoD Available Above ₹500",
+  robocraze: "CoD Available at ₹65 Extra",
+  quartz: "CoD Available at ₹30 Extra",
+};

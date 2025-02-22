@@ -1,7 +1,7 @@
 import React from "react";
 import { ExternalLink } from "lucide-react";
 import { ProductType } from "../SearchComponent";
-import { freeShippingAbove, shippingFee } from "@/data";
+import { codInformation, freeShippingAbove, shippingFee } from "@/data";
 import { LikeButton } from "../Wishlist";
 import { Button } from "./button";
 import BellDialog from "./BellDialog";
@@ -63,7 +63,7 @@ const ProductItem = ({
               className="h-6 w-20 md:h-8 md:w-28 object-contain rounded"
             />
           </div>
-          <div className="flex gap-1 justify-end">
+          <div className="flex items-center gap-2 md:gap-3 justify-end">
             <LikeButton product={product} />
             <BellDialog
               handleSubmit={handleSubmit}
@@ -133,6 +133,9 @@ const ProductItem = ({
             <span className="text-xs md:text-sm text-muted-foreground ml-1">
               (Inc. GST)
             </span>
+            <span className="text-gray-500 text-xs md:text-sm font-light ml-1">
+              | {codInformation[product.source as keyof typeof codInformation]}
+            </span>
           </span>
         </div>
 
@@ -140,7 +143,6 @@ const ProductItem = ({
           {showMoreData && (
             <div className="flex flex-col md:flex-row justify-start w-full">
               <div className="text-xs text-gray-500 rounded-none md:text-sm w-full md:w-auto flex items-center gap-2">
-                <span className="rounded-full bg-gray-500 h-2 w-2"></span>
                 {!isFreeShipping && (
                   <span className="">
                     Shipping fee
@@ -163,9 +165,7 @@ const ProductItem = ({
                 )}
               </div>
 
-              <div className="text-xs px-0 md:px-2 rounded-none md:text-sm w-full md:w-auto flex items-center gap-2">
-                <span className="text-gray-500"></span>
-              </div>
+              <div className="text-xs px-0 md:px-2 rounded-none md:text-sm w-full md:w-auto flex items-center gap-2"></div>
             </div>
           )}
 

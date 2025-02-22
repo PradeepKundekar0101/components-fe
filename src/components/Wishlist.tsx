@@ -151,26 +151,26 @@ export const LikeButton = ({ product }: { product: ProductType }) => {
     <Button
       variant="ghost"
       className={`
-        flex rounded-full md:items-center
+        flex items-center justify-center
+        h-6 w-6 md:h-6 md:w-6
+        rounded-full p-0
         ${
           isLiked
-            ? " text-white hover:text-white"
-            : "bg-white text-gray-900 hover:bg-gray-100"
+            ? "text-white hover:text-white"
+            : "bg-white text-gray-700 hover:bg-gray-100"
         }
-        md:text-center md:justify-center justify-center 
-         p-0
         transition-all duration-200 ease-in-out
         transform hover:scale-105
-        hover:bg-transparent
+        hover:bg-transparent bg-gray-100 border-gray-400 border-[0.8px]
       `}
       size="sm"
       onClick={toggleLike}
     >
       <Heart
-        className="h-3 w-3 md:h-6 md:w-6"
-        fill={isLiked ? "red" : "#292929"}
+        className="h-4 w-4 md:h-5 md:w-5"
+        fill={isLiked ? "red" : "currentColor"}
         strokeWidth={2}
-        stroke={isLiked ? "red" : "#292929"}
+        stroke={isLiked ? "red" : "currentColor"}
       />
     </Button>
   );

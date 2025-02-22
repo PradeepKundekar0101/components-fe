@@ -29,8 +29,18 @@ const BellDialog = ({
     <Dialog>
       <DialogTrigger asChild>
         <Button
-          variant="outline"
-          className="shadow-none px-0 rounded-full border-none  md:text-center text-gray-900"
+          variant="ghost"
+          className={`
+            flex items-center justify-center
+            h-6 w-6 md:h-6 md:w-6
+            rounded-full p-0
+            
+               text-gray-700 hover:bg-gray-100
+
+            transition-all duration-200 ease-in-out
+            transform hover:scale-105
+            hover:bg-transparent bg-gray-100 border-gray-400 border-[0.8px]
+          `}
           size="sm"
         >
           <Bell className="h-3 w-3 md:h-5 md:w-5" />

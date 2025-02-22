@@ -2,32 +2,32 @@ const brands = [
   {
     name: "Robu",
     env: import.meta.env.VITE_ROBU_ALLOWED,
-    image: "/robu.png",
+    image: "/components-radar/robu.png",
   },
   {
     name: "Sunrom",
     env: import.meta.env.VITE_SUNROM_ALLOWED,
-    image: "/sunrom.png",
+    image: "/components-radar/sunrom.png",
   },
   {
     name: "Evelta",
     env: import.meta.env.VITE_EVELTA_ALLOWED,
-    image: "/evelta.webp",
+    image: "/components-radar/evelta.webp",
   },
   {
     name: "RoboKits",
     env: import.meta.env.VITE_ROBOKIT_ALLOWED,
-    image: "/robokit.png",
+    image: "/components-radar/robokit.png",
   },
   {
     name: "Quartz",
     env: import.meta.env.VITE_QUARTZ_ALLOWED,
-    image: "/quartz.png",
+    image: "/components-radar/quartz.png",
   },
   {
     name: "Zbotics",
     env: import.meta.env.VITE_ZBOTICS_ALLOWED,
-    image: "/zbotics.webp",
+    image: "/components-radar/zbotics.webp",
   },
 ].filter((brand) => brand.env === "true");
 
