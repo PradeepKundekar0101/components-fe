@@ -172,7 +172,7 @@ const ProductItem = ({
           <a
             href={product.productUrl}
             target="_blank"
-            rel="noopener noreferrer"
+            rel="nofollow noopener noreferrer"
           >
             <Button
               className="flex items-center border text-white bg-red-500 hover:bg-red-600 w-full h-8 text-left md:text-center md:justify-center justify-start shadow-none rounded-full px-1 md:px-3 gap-1 md:gap-2"
