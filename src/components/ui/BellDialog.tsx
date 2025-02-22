@@ -60,6 +60,7 @@ const BellDialog = ({
               id="fullName"
               placeholder="Enter your full name"
               className="w-full"
+              disabled
             />
           </div>
 
@@ -70,12 +71,13 @@ const BellDialog = ({
               type="email"
               placeholder="Enter your email"
               className="w-full"
+              disabled
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="reminderType">Reminder Type</Label>
-            <Select>
+            <Select disabled>
               <SelectTrigger>
                 <SelectValue placeholder="Select reminder type" />
               </SelectTrigger>
@@ -96,7 +98,7 @@ const BellDialog = ({
           <Button
             type="submit"
             className="w-full bg-red-600 hover:bg-red-700 text-white"
-            disabled={isSubmitting}
+            disabled={isSubmitting || true}
           >
             {isSubmitting ? "Setting reminder..." : "Set Reminder"}
           </Button>

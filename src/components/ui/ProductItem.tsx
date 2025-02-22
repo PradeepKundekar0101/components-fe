@@ -52,7 +52,7 @@ const ProductItem = ({
       key={product.objectID}
       className={`flex gap-2 md:gap-4 p-4 ${
         showMoreData ? "border rounded-lg" : "border-b"
-      }  border-gray-200 transition-all  flex-row relative`}
+      }  border-gray-200 transition-all md:flex-row flex-col relative`}
     >
       {showMoreData && (
         <div className="flex flex-col gap-2 absolute top-2 right-4">
@@ -73,11 +73,11 @@ const ProductItem = ({
         </div>
       )}
 
-      <div className="w-20 h-20 md:w-24 md:h-24 flex items-center justify-center flex-shrink-0 bg-slate-50">
+      <div className="w-full md:w-24 h-32 md:h-24 flex items-center justify-center flex-shrink-0 bg-slate-50">
         <img
           src={product.imageUrl || product.productImage}
           alt={product.productName}
-          className="object-contain max-w-full max-h-full rounded-lg"
+          className="object-contain max-w-[80%] md:max-w-full max-h-[80%] md:max-h-full rounded-lg"
         />
       </div>
 
@@ -175,7 +175,7 @@ const ProductItem = ({
             rel="nofollow noopener noreferrer"
           >
             <Button
-              className="flex items-center border text-white bg-red-500 hover:bg-red-600 w-full h-8 text-left md:text-center md:justify-center justify-start shadow-none rounded-full px-1 md:px-3 gap-1 md:gap-2"
+              className="flex items-center border text-white bg-red-500 hover:bg-red-600 w-full h-8 text-left md:text-center md:justify-center justify-start shadow-none rounded-full px-2 md:px-3 gap-1 md:gap-2"
               size="sm"
             >
               <span className="flex items-center font-semibold gap-0 md:gap-1 text-xs md:text-sm">

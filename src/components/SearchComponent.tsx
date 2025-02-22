@@ -19,7 +19,8 @@ import { sites } from "@/config";
 import { WishlistContext, WishlistDrawer } from "./Wishlist";
 import FeatureCards from "./FeatureCards";
 import BrandList from "./BrandList";
-
+import { usePostHog } from "posthog-js/react";
+import { useSearchParams } from "react-router-dom";
 export type ProductType = {
   objectID: string;
   productName: string;
@@ -37,13 +38,15 @@ const ITEMS_PER_PAGE = 10;
 const allSourceIds = sources.map((source) => source.id);
 
 const ComponentSearch = () => {
-  const [query, setQuery] = useState("");
+  const [searchQuery] = useSearchParams();
+  const [query, setQuery] = useState(searchQuery.get("q") || "");
   const [results, setResults] = useState<ProductType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSources, setSelectedSources] =
     useState<string[]>(allSourceIds);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalHits, setTotalHits] = useState(0);
+  const posthog = usePostHog();
 
   const algoliaClient = axios.create({
     baseURL: `https://${import.meta.env.VITE_ALGOLIA_APP_ID}-dsn.algolia.net`,
@@ -109,6 +112,10 @@ const ComponentSearch = () => {
         },
         { signal }
       );
+
+      posthog.capture("search_results", {
+        query: searchQuery,
+      });
 
       setResults(response.data.hits);
       setTotalHits(response.data.nbHits);
@@ -211,7 +218,7 @@ const ComponentSearch = () => {
                     <SearchIcon />
                   </div>
                   <h1 className="text-red-600 text-md md:text-2xl font-semibold">
-                    Components Search
+                    Components Radar
                   </h1>
                 </div>
                 <div className="flex items-center gap-2">
