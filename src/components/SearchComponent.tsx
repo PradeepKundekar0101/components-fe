@@ -38,7 +38,7 @@ const ITEMS_PER_PAGE = 10;
 const allSourceIds = sources.map((source) => source.id);
 
 const ComponentSearch = () => {
-  const [searchQuery] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useSearchParams();
   const [query, setQuery] = useState(searchQuery.get("q") || "");
   const [results, setResults] = useState<ProductType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -150,6 +150,9 @@ const ComponentSearch = () => {
     const searchQuery = event.target.value;
     setQuery(searchQuery);
     setCurrentPage(0); // Reset to first page on new search
+
+    // Update URL query parameters
+    setSearchQuery(searchQuery ? { q: searchQuery } : {});
 
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
