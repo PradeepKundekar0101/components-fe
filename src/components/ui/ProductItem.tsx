@@ -1,10 +1,17 @@
 import React from "react";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Info } from "lucide-react";
 import { ProductType } from "../SearchComponent";
 import { codInformation, freeShippingAbove, shippingFee } from "@/data";
 import { LikeButton } from "../Wishlist";
 import { Button } from "./button";
 import BellDialog from "./BellDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./dialog";
 
 const ProductItem = ({
   product,
@@ -16,7 +23,7 @@ const ProductItem = ({
   showMoreData?: boolean;
 }) => {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  console.log(showMoreData);
+  const isMobile = window.innerWidth < 768;
   const highlightText = (text: string, query: string) => {
     if (!query) return text;
     const regex = new RegExp(`(${query})`, "gi");
@@ -47,12 +54,63 @@ const ProductItem = ({
 
   const stockString = (product.stock || "").toString();
 
+  const shippingAndCodInfo = (
+    <>
+      <div className="space-y-4">
+        <h3 className="text-sm text-gray-700 mb-2">{product.productName}</h3>
+        <div>
+          <span className="font-semibold">Shipping Details:</span>
+          <div className="text-sm text-gray-600 mt-1">
+            {!isFreeShipping && (
+              <div className="flex items-center gap-1">
+                <span>•</span>
+                <span>
+                  Shipping fee:{" "}
+                  {shippingFee[product.source as keyof typeof shippingFee]}
+                </span>
+              </div>
+            )}
+            {isFreeShipping ? (
+              <div className="flex items-center gap-1">
+                <span>•</span>
+                <span>Free shipping</span>
+              </div>
+            ) : !eligibleForFreeShipping ? (
+              <div className="flex items-center gap-1">
+                <span>•</span>
+                <span>
+                  Free shipping above ₹
+                  {
+                    freeShippingAbove[
+                      product.source as keyof typeof freeShippingAbove
+                    ]
+                  }
+                </span>
+              </div>
+            ) : null}
+          </div>
+        </div>
+        <div>
+          <span className="font-semibold">Payment Details:</span>
+          <div className="text-sm text-gray-600 mt-1">
+            <div className="flex items-center gap-1">
+              <span>•</span>
+              <span>
+                {codInformation[product.source as keyof typeof codInformation]}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <div
       key={product.objectID}
-      className={`flex gap-2 md:gap-4 p-4 ${
+      className={`flex gap-2 md:gap-4 p-2 md:p-4 ${
         showMoreData ? "border rounded-lg" : "border-b"
-      }  border-gray-200 transition-all md:flex-row flex-col relative`}
+      }  border-gray-200 transition-all flex-row relative`}
     >
       {showMoreData && (
         <div className="flex flex-col gap-2 absolute top-2 right-4">
@@ -65,6 +123,33 @@ const ProductItem = ({
           </div>
           <div className="flex items-center gap-2 md:gap-3 justify-end">
             <LikeButton product={product} />
+            <div className="block md:hidden">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={`
+                      flex items-center justify-center
+                      h-6 w-6 md:h-6 md:w-6
+                      rounded-full p-0
+                      text-gray-700 hover:bg-gray-100
+                      transition-all duration-200 ease-in-out
+                      transform hover:scale-105
+                      hover:bg-transparent bg-gray-100 border-gray-400 border-[0.8px]
+                    `}
+                    size="sm"
+                  >
+                    <Info className="h-3 w-3 md:h-5 md:w-5" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="w-[90%] rounded-lg">
+                  <DialogHeader>
+                    <DialogTitle>Shipping & Payment Details</DialogTitle>
+                  </DialogHeader>
+                  {shippingAndCodInfo}
+                </DialogContent>
+              </Dialog>
+            </div>
             <BellDialog
               handleSubmit={handleSubmit}
               isSubmitting={isSubmitting}
@@ -73,7 +158,7 @@ const ProductItem = ({
         </div>
       )}
 
-      <div className="w-full md:w-24 h-32 md:h-24 flex items-center justify-center flex-shrink-0 bg-slate-50">
+      <div className="w-24 h-16 md:h-24 flex items-center justify-center flex-shrink-0 ">
         <img
           src={product.imageUrl || product.productImage}
           alt={product.productName}
@@ -84,11 +169,15 @@ const ProductItem = ({
       <div className="flex-grow">
         <h2
           className={`font-medium mb-1 text-xs md:text-sm ${
-            !showMoreData ? "pr-10" : "pr-32"
+            !showMoreData ? "md:pr-10 pr-8" : "md:pr-32 pr-24"
           }`}
         >
           {highlightText(
-            product.productName?.length > 60
+            isMobile
+              ? product.productName?.length > 30
+                ? product.productName.slice(0, 30) + "..."
+                : product.productName || "Untitled Product"
+              : product.productName?.length > 60
               ? product.productName.slice(0, 60) + "..."
               : product.productName || "Untitled Product",
             query
@@ -134,37 +223,41 @@ const ProductItem = ({
               (Inc. GST)
             </span>
             <span className="text-gray-500 text-xs md:text-sm font-light ml-1">
-              | {codInformation[product.source as keyof typeof codInformation]}
+              <span className="hidden md:block">
+                |{" "}
+                {codInformation[product.source as keyof typeof codInformation]}
+              </span>
             </span>
           </span>
         </div>
 
-        <div className="flex justify-between items-center w-full">
+        <div className="flex items-center md:w-full">
           {showMoreData && (
-            <div className="flex flex-col md:flex-row justify-start w-full">
-              <div className="text-xs text-gray-500 rounded-none md:text-sm w-full md:w-auto flex items-center gap-2">
-                {!isFreeShipping && (
-                  <span className="">
-                    Shipping fee
-                    {" " +
-                      shippingFee[product.source as keyof typeof shippingFee]}
-                  </span>
-                )}
-                {isFreeShipping ? (
-                  <span>Free shipping</span>
-                ) : !eligibleForFreeShipping ? (
-                  <span>
-                    {` | Free above ₹${
-                      freeShippingAbove[
-                        product.source as keyof typeof freeShippingAbove
-                      ]
-                    }`}
-                  </span>
-                ) : (
-                  ""
-                )}
+            <div className="flex flex-col md:flex-row justify-start w-0 md:w-full">
+              <div className="text-xs text-gray-500 rounded-none md:text-sm flex items-center w-auto gap-2">
+                <div className="md:block hidden">
+                  {!isFreeShipping && (
+                    <span className="">
+                      Shipping fee
+                      {" " +
+                        shippingFee[product.source as keyof typeof shippingFee]}
+                    </span>
+                  )}
+                  {isFreeShipping ? (
+                    <span>Free shipping</span>
+                  ) : !eligibleForFreeShipping ? (
+                    <span>
+                      {` | Free above ₹${
+                        freeShippingAbove[
+                          product.source as keyof typeof freeShippingAbove
+                        ]
+                      }`}
+                    </span>
+                  ) : (
+                    ""
+                  )}
+                </div>
               </div>
-
               <div className="text-xs px-0 md:px-2 rounded-none md:text-sm w-full md:w-auto flex items-center gap-2"></div>
             </div>
           )}
@@ -175,7 +268,7 @@ const ProductItem = ({
             rel="nofollow noopener noreferrer"
           >
             <Button
-              className="flex items-center border text-white bg-red-500 hover:bg-red-600 w-full h-8 text-left md:text-center md:justify-center justify-start shadow-none rounded-full px-2 md:px-3 gap-1 md:gap-2"
+              className="flex items-center border text-white bg-red-500 hover:bg-red-600 md:w-full h-6 md:h-8 text-left md:text-center md:justify-center justify-start shadow-none rounded-full px-2 md:px-3 gap-1 md:gap-2 absolute bottom-[10%] left-3 w-fit md:relative "
               size="sm"
             >
               <span className="flex items-center font-semibold gap-0 md:gap-1 text-xs md:text-sm">

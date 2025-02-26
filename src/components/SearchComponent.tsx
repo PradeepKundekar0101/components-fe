@@ -75,7 +75,6 @@ const ComponentSearch = () => {
         .filter((site) => site.isAllowed)
         .map((site) => site.name);
 
-      // Create filter for allowed sources that are also selected
       const selectedAllowedSources = selectedSources.filter((source) =>
         allowedSources.includes(source)
       );
@@ -215,7 +214,7 @@ const ComponentSearch = () => {
         <div className="min-h-screen w-[100%] md:w-[50%] flex flex-col mt-32 overflow-x-hidden">
           <div className="flex-1">
             <div className="max-w-xl md:max-w-5xl mx-auto p-4">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-2 md:mb-4">
                 <div className="flex items-center gap-2">
                   <div className="text-red-600 text-2xl">
                     <SearchIcon />
@@ -238,7 +237,7 @@ const ComponentSearch = () => {
               <h1 className="text-gray-600 text-sm md:text-lg font-semibold my-3">
                 Find & Compare Electronic Components
               </h1>
-              <div className="relative mb-6">
+              <div className="relative mb-2 md:mb-6">
                 <input
                   type="text"
                   placeholder="Search components by name or part number"
@@ -259,7 +258,7 @@ const ComponentSearch = () => {
               ) : (
                 <div className="h-full">
                   {isLoading && (
-                    <div className="space-y-4">
+                    <div className="space-y-2 md:space-y-4">
                       {[...Array(6)].map((_, index) => (
                         <ProductSkeleton key={index} />
                       ))}
@@ -275,7 +274,7 @@ const ComponentSearch = () => {
                     )}
 
                   {!isLoading && (
-                    <div className="space-y-4 h-full">
+                    <div className="space-y-2 md:space-y-4 h-full">
                       {query.length > 0 && (
                         <div className="flex justify-between items-center">
                           <h1 className="text-gray-600 text-xl font-semibold">
@@ -287,7 +286,7 @@ const ComponentSearch = () => {
                         </div>
                       )}
 
-                      <div className="space-y-4">
+                      <div className="space-y-2 md:space-y-4">
                         {results.map((product: ProductType) => (
                           <ProductItem
                             key={product.objectID}
@@ -362,13 +361,13 @@ const ComponentSearch = () => {
         <div className="w-[0%] md:w-[40%] mt-32 overflow-x-hidden bg-white flex justify-center items-start md:border-l border-gray-200 px-2 ">
           <div className="w-[400px] flex flex-col sm:w-[540px] overflow-y-auto">
             {likedProducts.length !== 0 && (
-              <div className="mb-4">
+              <div className="mb-2 md:mb-4">
                 <h1 className="text-xl font-bold">
                   Your Wishlist ({likedProducts.length} items)
                 </h1>
               </div>
             )}
-            <div className="space-y-4">
+            <div className="space-y-2 md:space-y-4">
               {likedProducts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-4 py-8">
                   <ShoppingCart className="h-16 w-16 text-gray-300" />

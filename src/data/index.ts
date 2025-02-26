@@ -1,11 +1,15 @@
 export const sources = [
-  { id: "robu", label: "Robu", logo: "robu.png" },
-  { id: "robokit", label: "Robokit", logo: "robokit.png" },
-  { id: "sunrom", label: "Sunrom", logo: "sunrom.png" },
-  { id: "zbotic", label: "ZBotic", logo: "zbotic.webp" },
-  { id: "evelta", label: "Evelta", logo: "evelta.webp" },
-  { id: "robocraze", label: "Robocraze", logo: "robocraze.webp" },
-  { id: "quartz", label: "Quartz", logo: "quartz.png" },
+  { id: "robu", label: "Robu", logo: "components-radar/robu.png" },
+  { id: "robokit", label: "Robokit", logo: "components-radar/robokit.png" },
+  { id: "sunrom", label: "Sunrom", logo: "components-radar/sunrom.png" },
+  { id: "zbotic", label: "ZBotic", logo: "components-radar/zbotic.webp" },
+  { id: "evelta", label: "Evelta", logo: "components-radar/evelta.webp" },
+  {
+    id: "robocraze",
+    label: "Robocraze",
+    logo: "components-radar/robocraze.webp",
+  },
+  { id: "quartz", label: "Quartz", logo: "components-radar/quartz.png" },
 ];
 
 export const shippingFee = {
