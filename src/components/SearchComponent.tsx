@@ -112,8 +112,15 @@ const ComponentSearch = () => {
         { signal }
       );
 
-      posthog.capture("search_results", {
-        query: searchQuery,
+      const normalizedQuery = searchQuery.toLowerCase().trim();
+
+      posthog.capture("search_query", {
+        query: normalizedQuery,
+        $set: {
+          [`search_count_${normalizedQuery}`]: {
+            $increment: 1,
+          },
+        },
       });
 
       setResults(response.data.hits);
