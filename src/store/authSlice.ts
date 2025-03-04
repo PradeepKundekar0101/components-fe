@@ -1,4 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 type User = {
   id: string;
@@ -39,7 +41,7 @@ const authSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
       localStorage.removeItem("user");
-      alert("You have been logged out.");
+      toast.info("You have been logged out.");
     },
   },
 });

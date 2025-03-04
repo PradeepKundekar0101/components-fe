@@ -4,16 +4,20 @@ import SearchComponent from "./components/SearchComponent";
 import { WishlistProvider } from "./components/Wishlist";
 import { Provider } from "react-redux";
 import { store } from "./store";
+import { ToastContainer } from "react-toastify";
 
 function App() {
   return (
-    <Provider store={store}>
-      <WishlistProvider>
-        <Navbar />
-        <SearchComponent />
-        <Footer />
-      </WishlistProvider>
-    </Provider>
+    <>
+      <ToastContainer />
+      <Provider store={store}>
+        <WishlistProvider>
+          <Navbar />
+          <SearchComponent />
+          <Footer />
+        </WishlistProvider>
+      </Provider>
+    </>
   );
 }
 
