@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff } from 'lucide-react';
@@ -20,8 +20,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import OtpVerificationDialog from './OtpVerificationDialog';
-import { signup } from "@/store/authSlice";
-import { useDispatch } from 'react-redux';
+// import { signup } from "@/store/authSlice";
+// import { useDispatch } from 'react-redux';
+import { useSignupFlowStore } from '@/store/signupFlowStore'; // Import the new store
 
 interface SignupFormProps {
   onSuccess: () => void;
@@ -31,9 +32,10 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [showOtpDialog, setShowOtpDialog] = useState<boolean>(false);
-  const [userEmail, setUserEmail] = useState<string>('');
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
+
+  // Use the signup flow store
+  const { currentStep, startSignupFlow, moveToOtpStep } = useSignupFlowStore();
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -47,6 +49,9 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
     },
   });
 
+  // Check if we should show OTP based on store state
+  const showOtpDialog = currentStep === 'otp';
+
   const onSubmit = async (values: SignupFormValues) => {
     if (values.password !== values.confirmPassword) {
       form.setError('confirmPassword', {
@@ -56,14 +61,13 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
       return;
     }
 
-
     setIsLoading(true);
     try {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Store the email for OTP verification
-      setUserEmail(values.email);
+      // Store the email in signup flow store
+      startSignupFlow(values.email);
 
       const mock = {
         id: '123',
@@ -72,8 +76,10 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
         email: values.email,
         phone: values.phone
       }
-      dispatch(signup(mock));
-      setShowOtpDialog(true);
+      // dispatch(signup(mock));
+
+      // Move to OTP step in store
+      moveToOtpStep(mock.id);
     } catch (error) {
       console.error('Signup failed:', error);
       form.setError('root', {
@@ -94,10 +100,8 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
   };
 
   const handleOtpVerificationSuccess = () => {
-    setShowOtpDialog(false);
     onSuccess();
   };
-
   return (
     <>
       <DialogHeader className="text-center">
@@ -266,14 +270,12 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
       {showOtpDialog && (
         <OtpVerificationDialog
           isOpen={showOtpDialog}
-          onClose={() => setShowOtpDialog(false)}
-          email={userEmail}
+          onClose={() => {/* handled by store */ }}
           onSuccess={handleOtpVerificationSuccess}
         />
       )}
     </>
   );
-
 };
 
 export default SignupForm;

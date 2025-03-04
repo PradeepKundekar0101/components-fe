@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff } from 'lucide-react';
@@ -26,6 +26,8 @@ import SignupForm from './SignupForm';
 import ForgotPasswordDialog from './ForgotPasswordDialog';
 import { login } from "@/store/authSlice";
 import { useDispatch } from 'react-redux';
+import { useSignupFlowStore } from '@/store/signupFlowStore';
+import OtpVerificationDialog from './OtpVerificationDialog';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -39,6 +41,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const [showForgotPassword, setShowForgotPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  // Use the signup flow store
+  const { currentStep } = useSignupFlowStore();
+
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -46,6 +51,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
       password: '',
     },
   });
+
+  // Effect to handle signup flow state
+  useEffect(() => {
+    // If there's an ongoing signup process (OTP step), switch to signup tab
+    if (currentStep === 'otp') {
+      setActiveTab('signup');
+    }
+  }, [currentStep]);
 
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
@@ -89,8 +102,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className=" p-6 pt-10  rounded-lg shadow-xl border border-gray-200 sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <Dialog open={isOpen} onOpenChange={onClose} >
+        <DialogContent className="p-6 pt-10 rounded-lg shadow-xl border border-gray-200 sm:max-w-md max-h-[90vh] overflow-y-auto !focus:outline-none">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-gray-100 rounded-lg p-1 h-12 ">
               <TabsTrigger value="login" className="py-2 px-4 rounded-md text-gray-700 hover:bg-red-500 hover:text-white transition">
@@ -183,7 +196,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
             </TabsContent>
 
             <TabsContent value="signup">
-              <SignupForm onSuccess={onClose} />
+              {currentStep === 'otp' ? (
+                <OtpVerificationDialog
+                  onSuccess={onClose}
+                  onClose={() => {
+                    // Optionally reset the tab or close the modal
+                    setActiveTab('login');
+                  }}
+                />
+              ) : (
+                <SignupForm onSuccess={onClose} />
+              )}
             </TabsContent>
           </Tabs>
         </DialogContent>
@@ -194,7 +217,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
       )}
     </>
   );
-
 };
 
 export default LoginModal;

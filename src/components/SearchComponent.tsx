@@ -134,6 +134,7 @@ const ComponentSearch = () => {
 
 
     } catch (error) {
+      console.log(error)
       if (axios.isCancel(error)) {
         console.log("Request cancelled");
       } else {

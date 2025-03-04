@@ -22,6 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import OtpVerificationDialog from './OtpVerificationDialog';
 import ResetPasswordDialog from './ResetPasswordDialog';
+import { useSignupFlowStore } from '@/store/signupFlowStore';
 
 interface ForgotPasswordDialogProps {
   isOpen: boolean;
@@ -46,15 +47,15 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
 
   const onSubmit = async (values: ForgotPasswordFormValues) => {
     setIsLoading(true);
+    console.log("values", values)
     try {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Store email for OTP verification
       setUserEmail(values.email);
 
-      // Show OTP verification dialog
-      setShowOtpDialog(true);
+      useSignupFlowStore.getState().moveToOtpStep('mockUserId'); // You might want to replace this with actual user ID
+      handleOtpVerificationSuccess();
     } catch (error) {
       console.error('Password reset request failed:', error);
       form.setError('root', {
@@ -137,8 +138,7 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
       {showOtpDialog && (
         <OtpVerificationDialog
           isOpen={showOtpDialog}
-          onClose={() => setShowOtpDialog(false)}
-          email={userEmail}
+          onClose={() => {/* handled by store */ }}
           onSuccess={handleOtpVerificationSuccess}
         />
       )}
