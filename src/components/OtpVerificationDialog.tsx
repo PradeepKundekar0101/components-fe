@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { otpSchema, OtpFormValues } from '@/schemas/auth-schema';
-import { useAuth } from '@/context/AuthContext';
+import { login } from "@/store/authSlice";
+import { useDispatch } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -36,7 +37,7 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [remainingTime, setRemainingTime] = useState<number>(120); // 2 minutes
-  const { login } = useAuth();
+  const dispatch = useDispatch();
 
   const form = useForm<OtpFormValues>({
     resolver: zodResolver(otpSchema),
@@ -73,6 +74,9 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
 
       // TODO: Replace with actual API verification
       // Mock successful OTP verification
+
+      console.log(values.otp)
+
       const mockUser = {
         id: '123',
         firstName: 'John',
@@ -81,7 +85,7 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
         phone: '1234567890',
       };
 
-      login(mockUser);
+      dispatch(login(mockUser));
       onSuccess();
     } catch (error) {
       console.error('OTP verification failed:', error);
@@ -121,16 +125,20 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="p-6 pt-8 rounded-lg border border-gray-200 sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Verify Your Email</DialogTitle>
-          <DialogDescription>
-            We've sent a verification code to {email}. Please enter the code below.
+          <DialogTitle className="text-lg font-semibold text-gray-800">
+            Verify Your Email
+          </DialogTitle>
+          <DialogDescription className="text-gray-600">
+            We've sent a verification code to <span className="font-medium text-red-600">{email}</span>.
+            Please enter the code below.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-4">
+            {/* OTP Input Field */}
             <FormField
               control={form.control}
               name="otp"
@@ -140,8 +148,8 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
                     <Input
                       placeholder="Enter 6-digit OTP"
                       maxLength={6}
+                      className="text-center text-lg font-bold tracking-wider border-gray-300 focus:ring-red-500 focus:border-red-500"
                       {...field}
-                      className="text-center text-lg font-bold tracking-wider"
                     />
                   </FormControl>
                   <FormMessage />
@@ -149,16 +157,18 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
               )}
             />
 
+            {/* Timer and Resend OTP */}
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-500">
-                Time remaining: {formatTime(remainingTime)}
+              <span className="text-gray-600">
+                Time remaining: <span className="font-medium">{formatTime(remainingTime)}</span>
               </span>
 
               <Button
                 type="button"
                 variant="link"
                 size="sm"
-                className={`px-0 font-normal text-red-600 ${remainingTime > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`px-0 font-medium text-red-600 transition ${remainingTime > 0 ? 'opacity-50 cursor-not-allowed' : 'hover:underline'
+                  }`}
                 onClick={handleResendOtp}
                 disabled={remainingTime > 0 || isLoading}
               >
@@ -166,14 +176,20 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
               </Button>
             </div>
 
+            {/* Error/Success Message */}
             {form.formState.errors.root && (
               <p className={`text-sm font-medium ${form.formState.errors.root.message === 'OTP resent successfully!' ? 'text-green-500' : 'text-red-500'}`}>
                 {form.formState.errors.root.message}
               </p>
             )}
 
-            <DialogFooter>
-              <Button type="submit" className="w-full" disabled={isLoading}>
+            {/* Footer Buttons */}
+            <DialogFooter className="pt-4">
+              <Button
+                type="submit"
+                className="w-full bg-red-600 text-white hover:bg-red-500"
+                disabled={isLoading}
+              >
                 {isLoading ? "Verifying..." : "Verify"}
               </Button>
             </DialogFooter>
@@ -181,6 +197,7 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
         </Form>
       </DialogContent>
     </Dialog>
+
   );
 };
 

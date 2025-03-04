@@ -21,7 +21,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/context/AuthContext';
+import { login } from "@/store/authSlice";
+import { useDispatch } from 'react-redux';
 
 interface ResetPasswordDialogProps {
   isOpen: boolean;
@@ -37,7 +38,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
-  const { login } = useAuth();
+  const dispatch = useDispatch();
 
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
@@ -57,7 +58,19 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
       // Example: await api.resetPassword(values.password);
 
       // Show success message or redirect
+
+      const mockUser = {
+        id: '123',
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'user@example.com',
+        phone: '1234567890',
+        password: values.password,
+        confirmPassword: values.confirmPassword
+      };
+
       if (onSuccess) {
+        dispatch(login(mockUser));
         onSuccess();
       } else {
         onClose();
@@ -83,41 +96,45 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="p-6 pt-8 rounded-lg shadow-xl border border-gray-200 sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Reset Your Password</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg font-semibold text-gray-800">
+            Reset Your Password
+          </DialogTitle>
+          <DialogDescription className="text-gray-600">
             Create a new password for your account. Make sure it's strong and secure.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-4">
+            {/* New Password Field */}
             <FormField
               control={form.control}
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>New Password</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium">New Password</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input
                         type={showPassword ? "text" : "password"}
                         placeholder="Enter your new password"
+                        className="border-gray-300 focus:ring-red-500 focus:border-red-500"
                         {...field}
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-600"
                         onClick={togglePasswordVisibility}
                       >
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </Button>
                     </div>
                   </FormControl>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-gray-500 mt-1">
                     Password must be at least 8 characters with uppercase, lowercase, number, and special character.
                   </p>
                   <FormMessage />
@@ -125,27 +142,29 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
               )}
             />
 
+            {/* Confirm Password Field */}
             <FormField
               control={form.control}
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Confirm Password</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium">Confirm Password</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Confirm your new password"
+                        className="border-gray-300 focus:ring-red-500 focus:border-red-500"
                         {...field}
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-600"
                         onClick={toggleConfirmPasswordVisibility}
                       >
-                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </Button>
                     </div>
                   </FormControl>
@@ -155,21 +174,27 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
             />
 
             {form.formState.errors.root && (
-              <p className="text-sm font-medium text-destructive">
+              <p className="text-sm font-medium text-red-500">
                 {form.formState.errors.root.message}
               </p>
             )}
 
-            <DialogFooter className="pt-4">
+            {/* Footer Buttons */}
+            <DialogFooter className="pt-4 flex justify-end gap-3">
               <Button
                 type="button"
                 variant="outline"
+                className="border-gray-300 text-gray-700 hover:border-red-500 hover:text-red-600"
                 onClick={onClose}
                 disabled={isLoading}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button
+                type="submit"
+                className="bg-red-600 text-white hover:bg-red-500"
+                disabled={isLoading}
+              >
                 {isLoading ? "Resetting..." : "Reset Password"}
               </Button>
             </DialogFooter>
@@ -177,6 +202,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
         </Form>
       </DialogContent>
     </Dialog>
+
   );
 };
 

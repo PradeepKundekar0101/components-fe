@@ -1,4 +1,4 @@
-import { useCallback, useState, useContext, useEffect } from "react";
+import { useCallback, useState } from "react";
 import {
   Search,
   SearchIcon,
@@ -19,10 +19,10 @@ import { sites } from "@/config";
 import { WishlistContext, WishlistDrawer } from "./Wishlist";
 import FeatureCards from "./FeatureCards";
 import BrandList from "./BrandList";
-import { usePostHog } from "posthog-js/react";
+// import { usePostHog } from "posthog-js/react";
 import { useSearchParams } from "react-router-dom";
 import LoginModal from "@/components/LoginModal";
-import { useAuth } from "@/context/AuthContext";
+import { useSelector } from 'react-redux';
 
 export type ProductType = {
   objectID: string;
@@ -49,9 +49,10 @@ const ComponentSearch = () => {
     useState<string[]>(allSourceIds);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalHits, setTotalHits] = useState(0);
-  const posthog = usePostHog();
+  // const posthog = usePostHog();
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const isAuthenticated = useSelector((state: any) => state.auth.isAuthenticated);
+
 
   const algoliaClient = axios.create({
     baseURL: `https://${import.meta.env.VITE_ALGOLIA_APP_ID}-dsn.algolia.net`,
@@ -75,7 +76,17 @@ const ComponentSearch = () => {
         return;
       }
 
-      // Get the list of allowed sources
+      // Increment search count in localStorage
+      let searchCount = parseInt(localStorage.getItem("searchCount") || "0", 10);
+      searchCount += 1;
+      localStorage.setItem("searchCount", searchCount.toString());
+
+      // Show login modal only if user has searched 3 or more times and is not authenticated
+      if (searchCount >= 3 && !isAuthenticated) {
+        setShowLoginModal(true);
+        return;
+      }
+
       const allowedSources = sites
         .filter((site) => site.isAllowed)
         .map((site) => site.name);
@@ -117,26 +128,11 @@ const ComponentSearch = () => {
         { signal }
       );
 
-      const normalizedQuery = searchQuery.toLowerCase().trim();
-
-      posthog.capture("search_query", {
-        query: normalizedQuery,
-        $set: {
-          [`search_count_${normalizedQuery}`]: {
-            $increment: 1,
-          },
-        },
-      });
-
       const fetchedResults = response.data.hits;
-      console.log("Fetched results:", fetchedResults);
       setResults(fetchedResults);
       setTotalHits(response.data.nbHits);
 
-      // Check if user has searched for 2+ products and is not authenticated
-      if (fetchedResults.length >= 2 && !isAuthenticated) {
-        setShowLoginModal(true);
-      }
+
     } catch (error) {
       if (axios.isCancel(error)) {
         console.log("Request cancelled");
@@ -147,6 +143,7 @@ const ComponentSearch = () => {
       setIsLoading(false);
     }
   };
+
 
   const debouncedSearch = useCallback(
     debounce((searchQuery: string, page: number, signal?: AbortSignal) => {

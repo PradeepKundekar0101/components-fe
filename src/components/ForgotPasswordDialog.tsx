@@ -79,26 +79,30 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="p-6 pt-8 rounded-lg shadow-xl border border-gray-200 sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Reset Your Password</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg font-semibold text-gray-800">
+              Reset Your Password
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
               Enter your email address and we'll send you a verification code to reset your password.
             </DialogDescription>
           </DialogHeader>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-4">
+              {/* Email Input Field */}
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="font-medium text-gray-700">Email</FormLabel>
                     <FormControl>
                       <Input
                         type="email"
                         placeholder="Enter your email address"
+                        className="border-gray-300 focus:ring-red-500 focus:border-red-500"
                         {...field}
                       />
                     </FormControl>
@@ -107,14 +111,20 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
                 )}
               />
 
+              {/* Error Message */}
               {form.formState.errors.root && (
                 <p className="text-sm font-medium text-red-500">
                   {form.formState.errors.root.message}
                 </p>
               )}
 
-              <DialogFooter>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+              {/* Footer Buttons */}
+              <DialogFooter className="pt-4">
+                <Button
+                  type="submit"
+                  className="w-full bg-red-600 text-white hover:bg-red-500"
+                  disabled={isLoading}
+                >
                   {isLoading ? "Sending..." : "Send Reset Link"}
                 </Button>
               </DialogFooter>
@@ -122,6 +132,7 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
           </Form>
         </DialogContent>
       </Dialog>
+
 
       {showOtpDialog && (
         <OtpVerificationDialog

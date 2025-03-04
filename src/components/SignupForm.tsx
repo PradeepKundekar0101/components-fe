@@ -20,6 +20,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import OtpVerificationDialog from './OtpVerificationDialog';
+import { signup } from "@/store/authSlice";
+import { useDispatch } from 'react-redux';
 
 interface SignupFormProps {
   onSuccess: () => void;
@@ -31,6 +33,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showOtpDialog, setShowOtpDialog] = useState<boolean>(false);
   const [userEmail, setUserEmail] = useState<string>('');
+  const dispatch = useDispatch();
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -45,6 +48,15 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
   });
 
   const onSubmit = async (values: SignupFormValues) => {
+    if (values.password !== values.confirmPassword) {
+      form.setError('confirmPassword', {
+        type: 'manual',
+        message: 'Passwords do not match'
+      })
+      return;
+    }
+
+
     setIsLoading(true);
     try {
       // Simulate API call
@@ -53,7 +65,14 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
       // Store the email for OTP verification
       setUserEmail(values.email);
 
-      // Show OTP verification dialog
+      const mock = {
+        id: '123',
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+        phone: values.phone
+      }
+      dispatch(signup(mock));
       setShowOtpDialog(true);
     } catch (error) {
       console.error('Signup failed:', error);
@@ -81,24 +100,30 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle>Create an account</DialogTitle>
-        <DialogDescription>
+      <DialogHeader className="text-center">
+        <DialogTitle className="text-xl font-bold text-gray-800 mt-4">Create an account</DialogTitle>
+        <DialogDescription className="text-gray-500">
           Fill in your details to create a new account.
         </DialogDescription>
       </DialogHeader>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+
+
+      <Form {...form} >
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-4 ">
           <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="firstName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>First Name</FormLabel>
+                  <FormLabel className="text-gray-700">First Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="John" {...field} />
+                    <Input
+                      placeholder="John"
+                      className="border-gray-300 focus:ring-red-600 focus:border-red-600 rounded-md"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -110,9 +135,13 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
               name="lastName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Last Name</FormLabel>
+                  <FormLabel className="text-gray-700">Last Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Doe" {...field} />
+                    <Input
+                      placeholder="Doe"
+                      className="border-gray-300 focus:ring-red-600 focus:border-red-600 rounded-md"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -125,11 +154,12 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel className="text-gray-700">Email</FormLabel>
                 <FormControl>
                   <Input
                     type="email"
                     placeholder="example@email.com"
+                    className="border-gray-300 focus:ring-red-600 focus:border-red-600 rounded-md"
                     {...field}
                   />
                 </FormControl>
@@ -143,11 +173,12 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
             name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Phone Number</FormLabel>
+                <FormLabel className="text-gray-700">Phone Number</FormLabel>
                 <FormControl>
                   <Input
                     type="tel"
                     placeholder="1234567890"
+                    className="border-gray-300 focus:ring-red-600 focus:border-red-600 rounded-md"
                     {...field}
                   />
                 </FormControl>
@@ -161,26 +192,23 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel className="text-gray-700">Password</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
+                      className="border-gray-300 focus:ring-red-600 focus:border-red-600 rounded-md pr-10"
                       {...field}
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-1"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-red-600"
                       onClick={togglePasswordVisibility}
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </Button>
                   </div>
                 </FormControl>
@@ -194,26 +222,23 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
             name="confirmPassword"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Confirm Password</FormLabel>
+                <FormLabel className="text-gray-700">Confirm Password</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="Confirm your password"
+                      className="border-gray-300 focus:ring-red-600 focus:border-red-600 rounded-md pr-10"
                       {...field}
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-1"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-red-600"
                       onClick={toggleConfirmPasswordVisibility}
                     >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </Button>
                   </div>
                 </FormControl>
@@ -229,7 +254,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
           )}
 
           <DialogFooter>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full bg-red-600 hover:bg-red-500 text-white font-semibold py-2 px-4 rounded-md shadow-md transition" disabled={isLoading}>
               {isLoading ? "Signing up..." : "Sign Up"}
             </Button>
           </DialogFooter>
@@ -246,6 +271,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
       )}
     </>
   );
+
 };
 
 export default SignupForm;
