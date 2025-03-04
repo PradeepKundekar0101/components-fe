@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useContext, useEffect } from "react";
 import {
   Search,
   SearchIcon,
@@ -21,6 +21,9 @@ import FeatureCards from "./FeatureCards";
 import BrandList from "./BrandList";
 import { usePostHog } from "posthog-js/react";
 import { useSearchParams } from "react-router-dom";
+import LoginModal from "@/components/LoginModal";
+import { useAuth } from "@/context/AuthContext";
+
 export type ProductType = {
   objectID: string;
   productName: string;
@@ -47,6 +50,8 @@ const ComponentSearch = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalHits, setTotalHits] = useState(0);
   const posthog = usePostHog();
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   const algoliaClient = axios.create({
     baseURL: `https://${import.meta.env.VITE_ALGOLIA_APP_ID}-dsn.algolia.net`,
@@ -123,8 +128,15 @@ const ComponentSearch = () => {
         },
       });
 
-      setResults(response.data.hits);
+      const fetchedResults = response.data.hits;
+      console.log("Fetched results:", fetchedResults);
+      setResults(fetchedResults);
       setTotalHits(response.data.nbHits);
+
+      // Check if user has searched for 2+ products and is not authenticated
+      if (fetchedResults.length >= 2 && !isAuthenticated) {
+        setShowLoginModal(true);
+      }
     } catch (error) {
       if (axios.isCancel(error)) {
         console.log("Request cancelled");
@@ -147,7 +159,7 @@ const ComponentSearch = () => {
         setIsLoading(false);
       }
     }, 300),
-    [selectedSources]
+    [selectedSources, isAuthenticated]
   );
 
   const abortControllerRef = React.useRef<AbortController | null>(null);
@@ -179,6 +191,10 @@ const ComponentSearch = () => {
     debouncedSearch(query, newPage, abortControllerRef.current.signal);
   };
 
+  const handleCloseLoginModal = () => {
+    setShowLoginModal(false);
+  };
+
   React.useEffect(() => {
     return () => {
       if (abortControllerRef.current) {
@@ -197,7 +213,7 @@ const ComponentSearch = () => {
       abortControllerRef.current = new AbortController();
       debouncedSearch(query, 0, abortControllerRef.current.signal);
     }
-  }, [selectedSources]);
+  }, [selectedSources, isAuthenticated]);
 
   const totalPages = Math.ceil(totalHits / ITEMS_PER_PAGE);
   const { likedProducts, setLikedProducts } = React.useContext(WishlistContext);
@@ -212,6 +228,9 @@ const ComponentSearch = () => {
 
   return (
     <div className="w-full flex flex-col ">
+
+      <LoginModal isOpen={showLoginModal} onClose={handleCloseLoginModal} />
+
       <div className="flex flex-row">
         <div className="w-[0%] md:w-[10%] overflow-x-hidden bg-gray-100 flex justify-center items-center">
           <div className="bg-gray-200 rounded-lg px-4 py-2 text-slate-400">
@@ -318,7 +337,7 @@ const ComponentSearch = () => {
                           <div className="flex items-center gap-1">
                             {[...Array(Math.min(5, totalPages))].map(
                               (_, index) => {
-                                let pageNumber;
+                                let pageNumber = 0;
                                 if (totalPages <= 5) {
                                   pageNumber = index;
                                 } else if (currentPage <= 2) {
