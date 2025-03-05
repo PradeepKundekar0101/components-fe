@@ -61,20 +61,12 @@ const InstallationGuide: React.FC<InstallationGuideProps> = ({
         <div className="bg-red-50/30 border-l-4 border-red-200 p-4 rounded">
           <ol className="space-y-3 text-gray-700 list-decimal pl-5">
             <li>
-              <span className="font-semibold">Open Chrome Web Store</span>
-              <p className="text-sm text-gray-600">Navigate to the Chrome Web Store</p>
-            </li>
-            <li>
-              <span className="font-semibold">Search for Extension</span>
-              <p className="text-sm text-gray-600">Find our extension by name</p>
-            </li>
-            <li>
-              <span className="font-semibold">Add to Chrome</span>
-              <p className="text-sm text-gray-600">Click "Add to Chrome" button</p>
+              <span className="font-semibold">Install the Extension</span>
+              <p className="text-sm text-gray-600">Click the button below to add it directly to Chrome.</p>
             </li>
             <li>
               <span className="font-semibold">Confirm Installation</span>
-              <p className="text-sm text-gray-600">Click "Add extension" in the popup</p>
+              <p className="text-sm text-gray-600">Click "Add extension" in the popup.</p>
             </li>
           </ol>
         </div>
@@ -86,9 +78,10 @@ const InstallationGuide: React.FC<InstallationGuideProps> = ({
             onClick={() => window.open('https://chromewebstore.google.com/detail/our-extension', '_blank')}
           >
             <Download className="h-5 w-5" />
-            <span>Go to Chrome Web Store</span>
+            <span>Add to Chrome</span>
           </Button>
         </div>
+
       </div>
     </div>
   );
