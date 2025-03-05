@@ -225,17 +225,15 @@ const ComponentSearch = () => {
   };
 
   return (
-    <div className="w-full flex flex-col ">
-
+    <div className="w-full flex flex-col">
       <LoginModal isOpen={showLoginModal} onClose={handleCloseLoginModal} />
-
       <div className="flex flex-row">
         <div className="w-[0%] md:w-[10%] overflow-x-hidden bg-gray-100 flex justify-center items-center">
           <div className="bg-gray-200 rounded-lg px-4 py-2 text-slate-400">
             Ads
           </div>
         </div>
-        <div className="min-h-screen w-[100%] md:w-[50%] flex flex-col mt-32 overflow-x-hidden">
+        <div className="min-h-screen w-[100%] md:w-[50%] flex flex-col pt-40 md:pt-36 overflow-x-hidden">
           <div className="flex-1">
             <div className="max-w-xl md:max-w-5xl mx-auto p-4">
               <div className="flex items-center justify-between mb-2 md:mb-4">

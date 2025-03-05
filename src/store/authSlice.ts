@@ -41,7 +41,7 @@ const authSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
       localStorage.removeItem("user");
-      toast.info("You have been logged out.");
+      toast.error("You have been logged out.");
     },
   },
 });
