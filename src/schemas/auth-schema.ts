@@ -49,9 +49,9 @@ export type SignupFormValues = z.infer<typeof signupSchema>;
 export const otpSchema = z.object({
   otp: z
     .string()
-    .min(4, 'OTP must be at least 4 digits')
-    .max(6, 'OTP must not exceed 6 digits')
-    .regex(/^\d+$/, 'OTP can only contain digits'),
+    .min(6, "OTP must be 6 digits")
+    .max(6, "OTP must be 6 digits")
+    .regex(/^\d+$/, "OTP must contain only numbers"),
 });
 
 export type OtpFormValues = z.infer<typeof otpSchema>;
@@ -82,5 +82,7 @@ export const resetPasswordSchema = z.object({
   message: "Passwords don't match",
   path: ["confirmPassword"],
 });
+
+
 
 export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;

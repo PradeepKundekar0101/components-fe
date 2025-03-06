@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff } from 'lucide-react';
@@ -20,9 +20,11 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import OtpVerificationDialog from './OtpVerificationDialog';
-// import { signup } from "@/store/authSlice";
-// import { useDispatch } from 'react-redux';
-import { useSignupFlowStore } from '@/store/signupFlowStore'; // Import the new store
+import { useSignupFlowStore } from '@/store/signupFlowStore';
+import api from '@/config/axios';
+import { toast } from 'react-toastify';
+import { useDispatch } from 'react-redux';
+import { signup } from '@/store/authSlice';
 
 interface SignupFormProps {
   onSuccess: () => void;
@@ -32,9 +34,8 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  // const dispatch = useDispatch();
+  const dispatch = useDispatch();
 
-  // Use the signup flow store
   const { currentStep, startSignupFlow, moveToOtpStep } = useSignupFlowStore();
 
   const form = useForm<SignupFormValues>({
@@ -49,7 +50,6 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
     },
   });
 
-  // Check if we should show OTP based on store state
   const showOtpDialog = currentStep === 'otp';
 
   const onSubmit = async (values: SignupFormValues) => {
@@ -63,28 +63,50 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Store the email in signup flow store
-      startSignupFlow(values.email);
-
-      const mock = {
-        id: '123',
-        firstName: values.firstName,
-        lastName: values.lastName,
+      const userData = {
+        firstname: values.firstName,
+        lastname: values.lastName,
         email: values.email,
-        phone: values.phone
-      }
-      // dispatch(signup(mock));
+        phone: values.phone,
+        password: values.password
+      };
 
-      // Move to OTP step in store
-      moveToOtpStep(mock.id);
-    } catch (error) {
+      console.log("Signup data:", userData);
+      const response = await api.post('/api/v1/auth/signup', userData);
+
+      if (response.status === 201 || response.status === 200) {
+        const tempUserData = {
+          id: '',
+          firstName: values.firstName,
+          lastName: values.lastName,
+          email: values.email,
+          phone: values.phone,
+          password: values.password // Store temporarily for auto-login after OTP
+        };
+
+        dispatch(signup(tempUserData));
+
+        // Start the signup flow with the user's email
+        startSignupFlow(values.email);
+
+        // Move to OTP step in store
+        moveToOtpStep(values.email);
+
+        toast.success(response.data.message || "Verification code sent to your email");
+      }
+    } catch (error: any) {
       console.error('Signup failed:', error);
+      let errorMessage = 'Signup failed. Please try again.';
+
+      // Check if the error has a specific message from the API
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      }
+
+      toast.error(errorMessage);
       form.setError('root', {
         type: 'manual',
-        message: 'Signup failed. Please try again.'
+        message: errorMessage
       });
     } finally {
       setIsLoading(false);

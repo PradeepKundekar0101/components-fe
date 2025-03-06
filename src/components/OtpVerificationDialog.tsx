@@ -1,9 +1,11 @@
+// In your OtpVerificationDialog.tsx file
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { otpSchema, OtpFormValues } from '@/schemas/auth-schema';
 import { login } from "@/store/authSlice";
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -22,8 +24,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useSignupFlowStore } from '@/store/signupFlowStore';
+import api from '@/config/axios';
+import { toast } from 'react-toastify';
 
-// Add back the interface for props
 interface OtpVerificationDialogProps {
   isOpen?: boolean;
   onClose?: () => void;
@@ -35,8 +38,9 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
   onClose
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [remainingTime, setRemainingTime] = useState<number>(120); // 2 minutes
+  const [remainingTime, setRemainingTime] = useState<number>(1); // 2 minutes
   const dispatch = useDispatch();
+  const user = useSelector((state: any) => state.auth.user);
 
   // Use the signup flow store
   const { userEmail, cancelFlow, resetFlow, currentStep } = useSignupFlowStore();
@@ -49,6 +53,8 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
   });
 
   useEffect(() => {
+    setRemainingTime(120);
+
     let timer: NodeJS.Timeout;
 
     if (remainingTime > 0) {
@@ -60,7 +66,7 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [remainingTime]);
+  }, []);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -71,26 +77,78 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
   const onSubmit = async (values: OtpFormValues) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      console.log(values)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Make API call to verify OTP
+      console.log("Verifying OTP:", userEmail, values.otp);
+      const response = await api.post('/api/v1/auth/verify-otp', {
+        email: userEmail,
+        otp: values.otp
+      });
 
-      const mockUser = {
-        id: '123',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: userEmail || "",
-        phone: '1234567890',
-      };
+      // If verification is successful
+      if (response.status === 200) {
+        toast.success(response.data.message || "Email verified successfully!");
 
-      dispatch(login(mockUser));
-      resetFlow(); // Reset the signup flow after successful login
-      onSuccess(); // Call the onSuccess prop
-    } catch (error) {
+        localStorage.setItem("user", JSON.stringify(user));
+
+        const currentUser = user;
+
+        if (!currentUser || !currentUser.email || !currentUser.password) {
+          throw new Error("User data is missing for auto-login");
+        }
+
+        // Auto-login after successful verification
+        try {
+
+          console.log(currentUser.email, currentUser.password);
+          const loginResponse = await api.post('/api/v1/auth/login', {
+            email: currentUser.email,
+            password: currentUser.password
+          });
+          console.log(loginResponse)
+
+          if (loginResponse.status === 200) {
+            // Extract JWT token from response
+            const token = loginResponse.data.token;
+
+            // Create complete user data without password
+            const authenticatedUser = {
+              id: loginResponse.data.userId || currentUser.id || '',
+              firstName: currentUser.firstName,
+              lastName: currentUser.lastName,
+              email: currentUser.email,
+              phone: currentUser.phone,
+              token: token
+            };
+
+            // Remove password from Redux store by dispatching login with clean user data
+            dispatch(login(authenticatedUser));
+
+            resetFlow();
+            onSuccess();
+          } else {
+            throw new Error("Auto-login failed after verification");
+          }
+        } catch (loginError) {
+          console.error("Auto-login failed:", loginError);
+          resetFlow();
+          onSuccess();
+        }
+      } else {
+        throw new Error(response.data.message || 'OTP verification failed');
+      }
+    } catch (error: any) {
       console.error('OTP verification failed:', error);
+      let errorMessage = 'Invalid OTP. Please try again.';
+
+      // Check if the error has a specific message from the API
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      }
+
+      toast.error(errorMessage);
       form.setError('root', {
         type: 'manual',
-        message: 'Invalid OTP. Please try again.'
+        message: errorMessage
       });
     } finally {
       setIsLoading(false);
@@ -100,13 +158,19 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
   const handleResendOtp = async () => {
     try {
       setIsLoading(true);
-      // Simulate API call to resend OTP
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Make API call to resend OTP
+      const response = await api.post('/api/v1/auth/resend-otp', {
+        email: userEmail
+      });
 
       // Reset timer
       setRemainingTime(120);
 
-      // Success message
+      // Show success message
+      toast.success(response.data.message || "OTP resent successfully!");
+
+      // Display success message in form
       form.setError('root', {
         type: 'manual',
         message: 'OTP resent successfully!',
@@ -115,19 +179,30 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
       setTimeout(() => {
         form.clearErrors('root');
       }, 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to resend OTP:', error);
+      let errorMessage = 'Failed to resend OTP. Please try again.';
+
+      // Check if the error has a specific message from the API
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      }
+
+      toast.error(errorMessage);
+      form.setError('root', {
+        type: 'manual',
+        message: errorMessage
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCancel = () => {
-    cancelFlow(); // This will trigger user deletion API and reset flow
-    onClose?.(); // Call onClose if provided
+    cancelFlow();
+    onClose?.();
   };
 
-  // Only render if the current step is 'otp'
   if (currentStep !== 'otp') return null;
 
   return (

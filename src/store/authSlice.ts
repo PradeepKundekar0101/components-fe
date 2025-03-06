@@ -8,16 +8,20 @@ type User = {
   lastName: string;
   email: string;
   phone: string;
+  password?: string; // Make password optional
+  token?: string;    // Add token field
 };
 
 type AuthState = {
   user: User | null;
   isAuthenticated: boolean;
+  isVerified: boolean; // Add verification state
 };
 
 const initialState: AuthState = {
   user: JSON.parse(localStorage.getItem("user") || "null"),
-  isAuthenticated: !!localStorage.getItem("user"),
+  isAuthenticated: !!localStorage.getItem("user") && !!JSON.parse(localStorage.getItem("user") || "null")?.token,
+  isVerified: !!localStorage.getItem("user") && !!JSON.parse(localStorage.getItem("user") || "null")?.token,
 };
 
 const authSlice = createSlice({
@@ -25,23 +29,28 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     signup: (state, action: PayloadAction<User>) => {
-      console.log("SIGNUP Auth")
+      console.log("SIGNUP Auth", action.payload);
       state.user = action.payload;
-      state.isAuthenticated = true;
-      localStorage.setItem("user", JSON.stringify(action.payload));
+      state.isAuthenticated = false;
+      state.isVerified = false;
     },
     login: (state, action: PayloadAction<User>) => {
-      console.log("LOGIN Auth")
-      state.user = action.payload;
+      console.log("LOGIN Auth");
+      const { password, ...userWithoutPassword } = action.payload;
+      
+      state.user = userWithoutPassword;
       state.isAuthenticated = true;
-      localStorage.setItem("user", JSON.stringify(action.payload));
+      state.isVerified = true;
+      localStorage.setItem("user", JSON.stringify(userWithoutPassword));
+      toast.success("Login successful!");
     },
     logout: (state) => {
-      console.log("LOGOUT Auth")
+      console.log("LOGOUT Auth");
       state.user = null;
       state.isAuthenticated = false;
+      state.isVerified = false;
       localStorage.removeItem("user");
-      toast.error("You have been logged out.");
+      toast.info("You have been logged out.");
     },
   },
 });

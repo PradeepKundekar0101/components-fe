@@ -52,7 +52,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     },
   });
 
-  // Effect to handle signup flow state
   useEffect(() => {
     // If there's an ongoing signup process (OTP step), switch to signup tab
     if (currentStep === 'otp') {
