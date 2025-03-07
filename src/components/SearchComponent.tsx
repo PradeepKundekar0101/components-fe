@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Search,
   SearchIcon,
@@ -23,6 +23,7 @@ import BrandList from "./BrandList";
 import { useSearchParams } from "react-router-dom";
 import LoginModal from "@/components/LoginModal";
 import { useSelector } from 'react-redux';
+import { useSignupFlowStore } from "@/store/signupFlowStore";
 
 export type ProductType = {
   objectID: string;
@@ -49,9 +50,9 @@ const ComponentSearch = () => {
     useState<string[]>(allSourceIds);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalHits, setTotalHits] = useState(0);
-  // const posthog = usePostHog();
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const isAuthenticated = useSelector((state: any) => state.auth.isAuthenticated);
+  const { currentStep } = useSignupFlowStore();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
 
   const algoliaClient = axios.create({
@@ -83,7 +84,7 @@ const ComponentSearch = () => {
 
       // Show login modal only if user has searched 3 or more times and is not authenticated
       if (searchCount >= 3 && !isAuthenticated) {
-        setShowLoginModal(true);
+        setIsLoginModalOpen(true);
         return;
       }
 
@@ -190,7 +191,7 @@ const ComponentSearch = () => {
   };
 
   const handleCloseLoginModal = () => {
-    setShowLoginModal(false);
+    setIsLoginModalOpen(false);
   };
 
   React.useEffect(() => {
@@ -224,9 +225,15 @@ const ComponentSearch = () => {
     localStorage.setItem("likedProducts", JSON.stringify(updatedProducts));
   };
 
+  useEffect(() => {
+    if (["login", "otp", "resetPassword"].includes(currentStep || "")) {
+      setIsLoginModalOpen(true);
+    }
+  }, [currentStep]);
+
   return (
     <div className="w-full flex flex-col">
-      <LoginModal isOpen={showLoginModal} onClose={handleCloseLoginModal} />
+      <LoginModal isOpen={isLoginModalOpen} onClose={handleCloseLoginModal} />
       <div className="flex flex-row">
         <div className="w-[0%] md:w-[10%] overflow-x-hidden bg-gray-100 flex justify-center items-center">
           <div className="bg-gray-200 rounded-lg px-4 py-2 text-slate-400">

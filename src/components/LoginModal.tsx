@@ -67,9 +67,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
       setActiveTab('signup');
     } else if (currentStep === 'login') {
       setActiveTab('login');
-      resetFlow();
     }
-  }, [currentStep, resetFlow]);
+  }, [currentStep]);
 
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);

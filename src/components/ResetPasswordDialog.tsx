@@ -39,7 +39,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
-  const { userEmail, otpValue, resetFlow } = useSignupFlowStore();
+  const { userEmail, otpValue, moveToLoginStep } = useSignupFlowStore();
 
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
@@ -77,10 +77,15 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
       const response = await api.post('/api/v1/auth/reset-password', resetData);
 
       if (response.status === 200) {
-        toast.success(response.data.message || "Password reset successfully");
+        const { token, user } = response.data;
 
-        // Reset the flow first (clears all state)
-        resetFlow();
+        // Store in localStorage
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+
+        toast.success("Password reset successfully and Logged In");
+
+        moveToLoginStep();
 
         if (onClose) {
           onClose();
@@ -94,7 +99,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
       console.error('Password reset failed:', error);
       let errorMessage = 'Failed to reset password. Please try again.';
 
-      if (error.response && error.response.data && error.response.data.message) {
+      if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
 
@@ -107,6 +112,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
       setIsLoading(false);
     }
   };
+
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);

@@ -79,7 +79,7 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
 
   const handleOtpVerificationSuccess = () => {
     setShowOtpDialog(false);
-    setShowResetDialog(true);
+    onClose(); // Close this dialog completely, let the flow state handle the rest
   };
 
   const handleResetPasswordSuccess = () => {
