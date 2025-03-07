@@ -41,6 +41,7 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
   const [remainingTime, setRemainingTime] = useState<number>(1); // 2 minutes
   const dispatch = useDispatch();
   const user = useSelector((state: any) => state.auth.user);
+  const RESEND_OTP_TIMER = 120;
 
   // Use the signup flow store
   const { userEmail, cancelFlow, resetFlow, currentStep } = useSignupFlowStore();
@@ -53,13 +54,38 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
   });
 
   useEffect(() => {
-    setRemainingTime(120);
+    const savedEndTime = localStorage.getItem('otpTimerEndTime');
+    const now = new Date().getTime();
+
+    if (savedEndTime) {
+      const endTime = parseInt(savedEndTime);
+      const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+
+      if (remaining <= 0) {
+        setRemainingTime(0);
+        localStorage.removeItem('otpTimerEndTime');
+      } else {
+        setRemainingTime(remaining);
+      }
+    } else {
+      setRemainingTime(RESEND_OTP_TIMER);
+      const endTime = now + (RESEND_OTP_TIMER * 1000);
+      localStorage.setItem('otpTimerEndTime', endTime.toString());
+    }
 
     let timer: NodeJS.Timeout;
 
     if (remainingTime > 0) {
       timer = setInterval(() => {
-        setRemainingTime((prevTime) => prevTime - 1);
+        setRemainingTime((prevTime) => {
+          const newTime = prevTime - 1;
+          if (newTime <= 0) {
+            clearInterval(timer);
+            localStorage.removeItem('otpTimerEndTime');
+            return 0;
+          }
+          return newTime;
+        });
       }, 1000);
     }
 
@@ -79,7 +105,7 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
     try {
       // Make API call to verify OTP
       console.log("Verifying OTP:", userEmail, values.otp);
-      const response = await api.post('/api/v1/auth/verify-otp', {
+      const response = await api.post('/api/v1/auth/verifyotp', {
         email: userEmail,
         otp: values.otp
       });
@@ -158,19 +184,16 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
   const handleResendOtp = async () => {
     try {
       setIsLoading(true);
-
-      // Make API call to resend OTP
-      const response = await api.post('/api/v1/auth/resend-otp', {
+      const response = await api.post('/api/v1/auth/sendotp', {
         email: userEmail
       });
 
-      // Reset timer
-      setRemainingTime(120);
+      setRemainingTime(RESEND_OTP_TIMER);
+      const now = new Date().getTime();
+      const endTime = now + (RESEND_OTP_TIMER * 1000);
+      localStorage.setItem('otpTimerEndTime', endTime.toString());
 
-      // Show success message
       toast.success(response.data.message || "OTP resent successfully!");
-
-      // Display success message in form
       form.setError('root', {
         type: 'manual',
         message: 'OTP resent successfully!',
@@ -182,12 +205,9 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
     } catch (error: any) {
       console.error('Failed to resend OTP:', error);
       let errorMessage = 'Failed to resend OTP. Please try again.';
-
-      // Check if the error has a specific message from the API
       if (error.response && error.response.data && error.response.data.message) {
         errorMessage = error.response.data.message;
       }
-
       toast.error(errorMessage);
       form.setError('root', {
         type: 'manual',
