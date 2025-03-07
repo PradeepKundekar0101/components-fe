@@ -1,11 +1,7 @@
-// In your OtpVerificationDialog.tsx file
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { otpSchema, OtpFormValues } from '@/schemas/auth-schema';
-import { login } from "@/store/authSlice";
-import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -31,20 +27,28 @@ interface OtpVerificationDialogProps {
   isOpen?: boolean;
   onClose?: () => void;
   onSuccess: () => void;
+  purpose?: 'verification' | 'passwordReset';
 }
 
 const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
+  isOpen,
   onSuccess,
-  onClose
+  onClose,
+  purpose = 'verification'
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [remainingTime, setRemainingTime] = useState<number>(1); // 2 minutes
-  const dispatch = useDispatch();
-  const user = useSelector((state: any) => state.auth.user);
+  const [remainingTime, setRemainingTime] = useState<number>(120); // 2 minutes
   const RESEND_OTP_TIMER = 120;
 
   // Use the signup flow store
-  const { userEmail, cancelFlow, resetFlow, currentStep } = useSignupFlowStore();
+  const {
+    userEmail,
+    cancelFlow,
+    resetFlow,
+    currentStep,
+    moveToResetPasswordStep,
+    setOtpValue
+  } = useSignupFlowStore();
 
   const form = useForm<OtpFormValues>({
     resolver: zodResolver(otpSchema),
@@ -103,59 +107,25 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
   const onSubmit = async (values: OtpFormValues) => {
     setIsLoading(true);
     try {
-      // Make API call to verify OTP
-      console.log("Verifying OTP:", userEmail, values.otp);
+      if (!userEmail) {
+        throw new Error("Email not found in state");
+      }
+
+      // Store OTP for password reset flow
+      setOtpValue(values.otp);
+
       const response = await api.post('/api/v1/auth/verifyotp', {
         email: userEmail,
         otp: values.otp
       });
 
-      // If verification is successful
       if (response.status === 200) {
         toast.success(response.data.message || "Email verified successfully!");
 
-        localStorage.setItem("user", JSON.stringify(user));
-
-        const currentUser = user;
-
-        if (!currentUser || !currentUser.email || !currentUser.password) {
-          throw new Error("User data is missing for auto-login");
-        }
-
-        // Auto-login after successful verification
-        try {
-
-          console.log(currentUser.email, currentUser.password);
-          const loginResponse = await api.post('/api/v1/auth/login', {
-            email: currentUser.email,
-            password: currentUser.password
-          });
-          console.log(loginResponse)
-
-          if (loginResponse.status === 200) {
-            // Extract JWT token from response
-            const token = loginResponse.data.token;
-
-            // Create complete user data without password
-            const authenticatedUser = {
-              id: loginResponse.data.userId || currentUser.id || '',
-              firstName: currentUser.firstName,
-              lastName: currentUser.lastName,
-              email: currentUser.email,
-              phone: currentUser.phone,
-              token: token
-            };
-
-            // Remove password from Redux store by dispatching login with clean user data
-            dispatch(login(authenticatedUser));
-
-            resetFlow();
-            onSuccess();
-          } else {
-            throw new Error("Auto-login failed after verification");
-          }
-        } catch (loginError) {
-          console.error("Auto-login failed:", loginError);
+        if (purpose === 'passwordReset') {
+          moveToResetPasswordStep();
+          onSuccess();  // Add this line to trigger the success callback
+        } else {
           resetFlow();
           onSuccess();
         }
@@ -166,7 +136,6 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
       console.error('OTP verification failed:', error);
       let errorMessage = 'Invalid OTP. Please try again.';
 
-      // Check if the error has a specific message from the API
       if (error.response && error.response.data && error.response.data.message) {
         errorMessage = error.response.data.message;
       }
@@ -184,6 +153,11 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
   const handleResendOtp = async () => {
     try {
       setIsLoading(true);
+
+      if (!userEmail) {
+        throw new Error("Email not found in state");
+      }
+
       const response = await api.post('/api/v1/auth/sendotp', {
         email: userEmail
       });
@@ -223,14 +197,14 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
     onClose?.();
   };
 
-  if (currentStep !== 'otp') return null;
+  if (!isOpen && currentStep !== 'otp') return null;
 
   return (
     <Dialog open={true} onOpenChange={handleCancel}>
       <DialogContent className="p-6 pt-8 rounded-lg border border-gray-200 sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-gray-800">
-            Verify Your Email
+            {purpose === 'passwordReset' ? 'Verify OTP' : 'Verify Your Email'}
           </DialogTitle>
           <DialogDescription className="text-gray-600">
             We've sent a verification code to <span className="font-medium text-red-600">{userEmail}</span>.
@@ -240,7 +214,6 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-4">
-            {/* OTP Input Field */}
             <FormField
               control={form.control}
               name="otp"
@@ -259,7 +232,6 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
               )}
             />
 
-            {/* Timer and Resend OTP */}
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-600">
                 Time remaining: <span className="font-medium">{formatTime(remainingTime)}</span>
@@ -269,8 +241,7 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
                 type="button"
                 variant="link"
                 size="sm"
-                className={`px-0 font-medium text-red-600 transition ${remainingTime > 0 ? 'opacity-50 cursor-not-allowed' : 'hover:underline'
-                  }`}
+                className={`px-0 font-medium text-red-600 transition ${remainingTime > 0 ? 'opacity-50 cursor-not-allowed' : 'hover:underline'}`}
                 onClick={handleResendOtp}
                 disabled={remainingTime > 0 || isLoading}
               >
@@ -278,14 +249,12 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
               </Button>
             </div>
 
-            {/* Error/Success Message */}
             {form.formState.errors.root && (
               <p className={`text-sm font-medium ${form.formState.errors.root.message === 'OTP resent successfully!' ? 'text-green-500' : 'text-red-500'}`}>
                 {form.formState.errors.root.message}
               </p>
             )}
 
-            {/* Footer Buttons */}
             <DialogFooter className="pt-4 flex space-x-2">
               <Button
                 type="button"

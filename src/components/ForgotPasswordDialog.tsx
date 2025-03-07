@@ -22,6 +22,8 @@ import {
 import { Input } from '@/components/ui/input';
 import OtpVerificationDialog from './OtpVerificationDialog';
 import ResetPasswordDialog from './ResetPasswordDialog';
+import api from '@/config/axios';
+import { toast } from 'react-toastify';
 import { useSignupFlowStore } from '@/store/signupFlowStore';
 
 interface ForgotPasswordDialogProps {
@@ -36,7 +38,7 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showOtpDialog, setShowOtpDialog] = useState<boolean>(false);
   const [showResetDialog, setShowResetDialog] = useState<boolean>(false);
-  const [userEmail, setUserEmail] = useState<string>('');
+  const { startSignupFlow, currentStep } = useSignupFlowStore();
 
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -47,20 +49,28 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
 
   const onSubmit = async (values: ForgotPasswordFormValues) => {
     setIsLoading(true);
-    console.log("values", values)
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await api.post('/api/v1/auth/forgot-password', {
+        email: values.email
+      });
 
-      setUserEmail(values.email);
-
-      useSignupFlowStore.getState().moveToOtpStep('mockUserId'); // You might want to replace this with actual user ID
-      handleOtpVerificationSuccess();
-    } catch (error) {
+      if (response.status === 200) {
+        startSignupFlow(values.email);
+        setShowOtpDialog(true);
+        toast.success(response.data.message || "Reset OTP sent to your email");
+      }
+    } catch (error: any) {
       console.error('Password reset request failed:', error);
+      let errorMessage = 'Failed to send reset email. Please try again.';
+
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      }
+
+      toast.error(errorMessage);
       form.setError('root', {
         type: 'manual',
-        message: 'Failed to send reset email. Please try again.'
+        message: errorMessage
       });
     } finally {
       setIsLoading(false);
@@ -77,6 +87,11 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
     onClose();
   };
 
+  // Don't show this dialog if we're in a later step of the flow
+  if (currentStep === 'otp' || currentStep === 'resetPassword') {
+    return null;
+  }
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -92,7 +107,6 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-4">
-              {/* Email Input Field */}
               <FormField
                 control={form.control}
                 name="email"
@@ -112,14 +126,12 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
                 )}
               />
 
-              {/* Error Message */}
               {form.formState.errors.root && (
                 <p className="text-sm font-medium text-red-500">
                   {form.formState.errors.root.message}
                 </p>
               )}
 
-              {/* Footer Buttons */}
               <DialogFooter className="pt-4">
                 <Button
                   type="submit"
@@ -134,12 +146,12 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
         </DialogContent>
       </Dialog>
 
-
       {showOtpDialog && (
         <OtpVerificationDialog
           isOpen={showOtpDialog}
-          onClose={() => {/* handled by store */ }}
+          onClose={() => setShowOtpDialog(false)}
           onSuccess={handleOtpVerificationSuccess}
+          purpose="passwordReset"
         />
       )}
 

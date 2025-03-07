@@ -28,6 +28,9 @@ import { login } from "@/store/authSlice";
 import { useDispatch } from 'react-redux';
 import { useSignupFlowStore } from '@/store/signupFlowStore';
 import OtpVerificationDialog from './OtpVerificationDialog';
+import api from '@/config/axios';
+import { toast } from 'react-toastify';
+import ResetPasswordDialog from './ResetPasswordDialog';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -42,45 +45,69 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Use the signup flow store
-  const { currentStep } = useSignupFlowStore();
+  const { currentStep, userEmail, resetFlow } = useSignupFlowStore();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      identifier: '',
+      identifier: userEmail || '',
       password: '',
     },
   });
 
+  // Update form when userEmail changes in store
   useEffect(() => {
-    // If there's an ongoing signup process (OTP step), switch to signup tab
-    if (currentStep === 'otp') {
-      setActiveTab('signup');
+    if (userEmail) {
+      form.setValue('identifier', userEmail);
     }
-  }, [currentStep]);
+  }, [userEmail, form]);
+
+  useEffect(() => {
+    if (currentStep === 'otp' || currentStep === 'resetPassword') {
+      setActiveTab('signup');
+    } else if (currentStep === 'login') {
+      setActiveTab('login');
+      resetFlow();
+    }
+  }, [currentStep, resetFlow]);
 
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const isEmail = values.identifier.includes('@');
 
-      // TODO: Replace with actual API call
-      const mockUser = {
-        id: '123',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: values.identifier.includes('@') ? values.identifier : 'user@example.com',
-        phone: !values.identifier.includes('@') ? values.identifier : '1234567890',
+      const loginData = {
+        email: isEmail ? values.identifier : '',
+        password: values.password
       };
 
-      dispatch(login(mockUser));
-      onClose();
-    } catch (error) {
+      const response = await api.post('/api/v1/auth/login', loginData);
+
+      if (response.status === 200) {
+        const authenticatedUser = {
+          id: response.data.userId || '',
+          firstName: '',
+          lastName: '',
+          email: isEmail ? values.identifier : '',
+          phone: !isEmail ? values.identifier : '',
+          token: response.data.token
+        };
+
+        dispatch(login(authenticatedUser));
+        resetFlow(); // Clear the flow when login is successful
+        toast.success(response.data.message || "Login successful");
+        onClose();
+      }
+    } catch (error: any) {
       console.error('Login failed:', error);
+      let errorMessage = 'Invalid credentials. Please try again.';
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      }
+      toast.error(errorMessage);
       form.setError('root', {
         type: 'manual',
-        message: 'Invalid credentials. Please try again.'
+        message: errorMessage
       });
     } finally {
       setIsLoading(false);
@@ -101,7 +128,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose} >
+      <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="p-6 pt-10 rounded-lg shadow-xl border border-gray-200 sm:max-w-md max-h-[90vh] overflow-y-auto !focus:outline-none">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-gray-100 rounded-lg p-1 h-12 ">
@@ -199,8 +226,19 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                 <OtpVerificationDialog
                   onSuccess={onClose}
                   onClose={() => {
-                    // Optionally reset the tab or close the modal
                     setActiveTab('login');
+                  }}
+                />
+              ) : currentStep === 'resetPassword' ? (
+                <ResetPasswordDialog
+                  isOpen={true}
+                  onClose={() => {
+                    resetFlow();
+                    setActiveTab('login');
+                  }}
+                  onSuccess={() => {
+                    resetFlow();
+                    onClose();
                   }}
                 />
               ) : (

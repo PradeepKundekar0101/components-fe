@@ -21,8 +21,9 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { login } from "@/store/authSlice";
-import { useDispatch } from 'react-redux';
+import { useSignupFlowStore } from '@/store/signupFlowStore';
+import api from '@/config/axios';
+import { toast } from 'react-toastify';
 
 interface ResetPasswordDialogProps {
   isOpen: boolean;
@@ -38,7 +39,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
-  const dispatch = useDispatch();
+  const { userEmail, otpValue, resetFlow } = useSignupFlowStore();
 
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
@@ -49,37 +50,58 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
   });
 
   const onSubmit = async (values: ResetPasswordFormValues) => {
+    if (values.password !== values.confirmPassword) {
+      form.setError('confirmPassword', {
+        type: 'manual',
+        message: 'Passwords do not match'
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      if (!userEmail) {
+        throw new Error("Email not found in state");
+      }
 
-      // Here you would typically call your password reset API
-      // Example: await api.resetPassword(values.password);
+      if (!otpValue) {
+        throw new Error("OTP not found in state");
+      }
 
-      // Show success message or redirect
-
-      const mockUser = {
-        id: '123',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'user@example.com',
-        phone: '1234567890',
-        password: values.password,
-        confirmPassword: values.confirmPassword
+      const resetData = {
+        email: userEmail,
+        otp: otpValue,
+        password: values.password
       };
 
-      if (onSuccess) {
-        dispatch(login(mockUser));
-        onSuccess();
-      } else {
-        onClose();
+      const response = await api.post('/api/v1/auth/reset-password', resetData);
+
+      if (response.status === 200) {
+        toast.success(response.data.message || "Password reset successfully");
+
+        // Reset the flow first (clears all state)
+        resetFlow();
+
+        if (onClose) {
+          onClose();
+        }
+
+        if (onSuccess) {
+          onSuccess();
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Password reset failed:', error);
+      let errorMessage = 'Failed to reset password. Please try again.';
+
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      }
+
+      toast.error(errorMessage);
       form.setError('root', {
         type: 'manual',
-        message: 'Failed to reset password. Please try again.',
+        message: errorMessage
       });
     } finally {
       setIsLoading(false);
@@ -108,7 +130,6 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-4">
-            {/* New Password Field */}
             <FormField
               control={form.control}
               name="password"
@@ -142,7 +163,6 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
               )}
             />
 
-            {/* Confirm Password Field */}
             <FormField
               control={form.control}
               name="confirmPassword"
@@ -179,7 +199,6 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
               </p>
             )}
 
-            {/* Footer Buttons */}
             <DialogFooter className="pt-4 flex justify-end gap-3">
               <Button
                 type="button"
@@ -202,7 +221,6 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
         </Form>
       </DialogContent>
     </Dialog>
-
   );
 };
 

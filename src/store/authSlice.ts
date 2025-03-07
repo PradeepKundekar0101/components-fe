@@ -8,14 +8,13 @@ type User = {
   lastName: string;
   email: string;
   phone: string;
-  password?: string; // Make password optional
-  token?: string;    // Add token field
+  token?: string;
 };
 
 type AuthState = {
   user: User | null;
   isAuthenticated: boolean;
-  isVerified: boolean; // Add verification state
+  isVerified: boolean;
 };
 
 const initialState: AuthState = {
@@ -29,28 +28,23 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     signup: (state, action: PayloadAction<User>) => {
-      console.log("SIGNUP Auth", action.payload);
       state.user = action.payload;
       state.isAuthenticated = false;
       state.isVerified = false;
+      localStorage.setItem("user", JSON.stringify(action.payload));
     },
     login: (state, action: PayloadAction<User>) => {
-      console.log("LOGIN Auth");
-      const { password, ...userWithoutPassword } = action.payload;
-      
-      state.user = userWithoutPassword;
+      state.user = action.payload;
       state.isAuthenticated = true;
       state.isVerified = true;
-      localStorage.setItem("user", JSON.stringify(userWithoutPassword));
-      toast.success("Login successful!");
+      localStorage.setItem("user", JSON.stringify(action.payload));
     },
     logout: (state) => {
-      console.log("LOGOUT Auth");
       state.user = null;
       state.isAuthenticated = false;
       state.isVerified = false;
       localStorage.removeItem("user");
-      toast.info("You have been logged out.");
+      toast.error("You have been logged out.");
     },
   },
 });
