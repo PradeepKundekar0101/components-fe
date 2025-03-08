@@ -43,7 +43,6 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
   // Use the signup flow store
   const {
     userEmail,
-    cancelFlow,
     resetFlow,
     currentStep,
     moveToResetPasswordStep,
@@ -192,9 +191,35 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
     }
   };
 
-  const handleCancel = () => {
-    cancelFlow();
-    onClose?.();
+  const handleCancel = async () => {
+    setIsLoading(true);
+    const userId = JSON.parse(localStorage.getItem('user') || 'null')?.id;
+    try {
+      if (purpose === 'verification' && userId) {
+        const response = await api.delete(`/api/v1/user/${userId}`);
+        console.log(response)
+
+        if (response.status === 200) {
+          toast.success("Registration cancelled successfully");
+        } else {
+          throw new Error("Failed to cancel registration");
+        }
+      }
+
+      resetFlow();
+      onClose?.();
+    } catch (error: any) {
+      console.error('Error cancelling registration:', error);
+      let errorMessage = 'Failed to cancel registration. Please try again.';
+
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      }
+
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!isOpen && currentStep !== 'otp') return null;
@@ -263,14 +288,14 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
                 onClick={handleCancel}
                 disabled={isLoading}
               >
-                Cancel
+                {isLoading && purpose === 'verification' ? "Cancelling..." : "Cancel"}
               </Button>
               <Button
                 type="submit"
                 className="w-1/2 bg-red-600 text-white hover:bg-red-500"
                 disabled={isLoading}
               >
-                {isLoading ? "Verifying..." : "Verify"}
+                {isLoading && form.formState.isSubmitting ? "Verifying..." : "Verify"}
               </Button>
             </DialogFooter>
           </form>

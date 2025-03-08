@@ -76,7 +76,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 
       if (response.status === 201 || response.status === 200) {
         const tempUserData = {
-          id: '',
+          id: response.data.userId,
           firstName: values.firstName,
           lastName: values.lastName,
           email: values.email,

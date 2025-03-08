@@ -21,7 +21,7 @@ export interface SignupFlowState {
 
 export const useSignupFlowStore = create<SignupFlowState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       currentStep: null,
       userEmail: null,
       userId: null,
