@@ -38,7 +38,7 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showOtpDialog, setShowOtpDialog] = useState<boolean>(false);
   const [showResetDialog, setShowResetDialog] = useState<boolean>(false);
-  const { startSignupFlow, currentStep } = useSignupFlowStore();
+  const { startSignupFlow, currentStep, moveToOtpStep } = useSignupFlowStore();
 
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -49,13 +49,26 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
 
   const onSubmit = async (values: ForgotPasswordFormValues) => {
     setIsLoading(true);
+    console.log("onSubmit..")
+    localStorage.setItem("email", values.email);
+    const signupFlow = JSON.parse(localStorage.getItem('signup-flow-storage') || '{}');
+    if (signupFlow.state) {
+      signupFlow.state.currentStep = "otp";
+      console.log(signupFlow.state.currentStep);
+      localStorage.setItem('signup-flow-storage', JSON.stringify(signupFlow));
+    }
+
+    moveToOtpStep(values.email);
+
+
     try {
       const response = await api.post('/api/v1/auth/forgot-password', {
         email: values.email
       });
 
       if (response.status === 200) {
-        startSignupFlow(values.email);
+        // startSignupFlow(values.email);
+
         setShowOtpDialog(true);
         toast.success(response.data.message || "Reset OTP sent to your email");
       }

@@ -46,7 +46,8 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
     resetFlow,
     currentStep,
     moveToResetPasswordStep,
-    setOtpValue
+    setOtpValue,
+    moveToOtpStep
   } = useSignupFlowStore();
 
   const form = useForm<OtpFormValues>({
@@ -56,7 +57,9 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
     },
   });
 
+
   useEffect(() => {
+
     const savedEndTime = localStorage.getItem('otpTimerEndTime');
     const now = new Date().getTime();
 
@@ -103,9 +106,14 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+
+
   const onSubmit = async (values: OtpFormValues) => {
+    moveToResetPasswordStep();
     setIsLoading(true);
     try {
+      const userEmail = localStorage.getItem('email');
+      console.log("userEmail: ", userEmail);
       if (!userEmail) {
         throw new Error("Email not found in state");
       }
@@ -121,13 +129,13 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
       if (response.status === 200) {
         toast.success(response.data.message || "Email verified successfully!");
 
-        if (purpose === 'passwordReset') {
-          moveToResetPasswordStep();
-          onSuccess();  // Add this line to trigger the success callback
-        } else {
-          resetFlow();
-          onSuccess();
-        }
+        // if (purpose === 'passwordReset') {
+        //   moveToResetPasswordStep();
+        //   onSuccess();  // Add this line to trigger the success callback
+        // } else {
+        //   resetFlow();
+        //   onSuccess();
+        // }
       } else {
         throw new Error(response.data.message || 'OTP verification failed');
       }
@@ -222,6 +230,8 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
     }
   };
 
+  const resetDone = localStorage.getItem('resetPasswordDone') == 'true';
+  if (resetDone) return null;
   if (!isOpen && currentStep !== 'otp') return null;
 
   return (

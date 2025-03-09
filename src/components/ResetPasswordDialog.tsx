@@ -58,8 +58,11 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
       return;
     }
 
+    const userEmail = localStorage.getItem('email');
+
     setIsLoading(true);
     try {
+
       if (!userEmail) {
         throw new Error("Email not found in state");
       }
@@ -80,12 +83,13 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
         const { token, user } = response.data;
 
         // Store in localStorage
+        localStorage.setItem('resetPasswordDone', 'true');
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
 
         toast.success("Password reset successfully and Logged In");
 
-        moveToLoginStep();
+        // moveToLoginStep();
 
         if (onClose) {
           onClose();

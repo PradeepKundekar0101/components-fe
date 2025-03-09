@@ -9,6 +9,7 @@ import {
   Smartphone,
   Download,
 } from 'lucide-react';
+import { DialogTitle } from '@radix-ui/react-dialog';
 
 interface InstallationGuideProps {
   initialOpen?: boolean;
@@ -152,6 +153,7 @@ const InstallationGuide: React.FC<InstallationGuideProps> = ({
   return (
     <Dialog open={isModalOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md p-0 overflow-hidden">
+        <DialogTitle></DialogTitle>
         {isMobile ? <MobilePWAInstructions /> : <DesktopExtensionInstructions />}
       </DialogContent>
     </Dialog>
