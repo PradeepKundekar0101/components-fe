@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Search,
   SearchIcon,
@@ -21,9 +21,9 @@ import FeatureCards from "./FeatureCards";
 import BrandList from "./BrandList";
 // import { usePostHog } from "posthog-js/react";
 import { useSearchParams } from "react-router-dom";
-import LoginModal from "@/components/LoginModal";
+import LoginModal from "@/components/AuthModals/LoginModal";
 import { useSelector } from 'react-redux';
-import { useSignupFlowStore } from "@/store/signupFlowStore";
+import SignupModal from "./AuthModals/SignupModal";
 
 export type ProductType = {
   objectID: string;
@@ -51,8 +51,8 @@ const ComponentSearch = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalHits, setTotalHits] = useState(0);
   const isAuthenticated = useSelector((state: any) => state.auth.isAuthenticated);
-  const { currentStep } = useSignupFlowStore();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
 
 
   const algoliaClient = axios.create({
@@ -190,9 +190,7 @@ const ComponentSearch = () => {
     debouncedSearch(query, newPage, abortControllerRef.current.signal);
   };
 
-  const handleCloseLoginModal = () => {
-    setIsLoginModalOpen(false);
-  };
+
 
   React.useEffect(() => {
     return () => {
@@ -225,15 +223,28 @@ const ComponentSearch = () => {
     localStorage.setItem("likedProducts", JSON.stringify(updatedProducts));
   };
 
-  useEffect(() => {
-    if (["login", "otp", "resetPassword"].includes(currentStep || "")) {
-      setIsLoginModalOpen(true);
-    }
-  }, [currentStep]);
+  const handleOpenSignup = () => {
+    setIsLoginModalOpen(false);
+    setIsSignupModalOpen(true);
+  }
+
+  const handleCloseLoginModal = () => {
+    setIsLoginModalOpen(false);
+  };
+
+  const handleCloseSignupModal = () => {
+    setIsSignupModalOpen(false);
+  }
+
+  const handleOpenLogin = () => {
+    setIsSignupModalOpen(false);
+    setIsLoginModalOpen(true);
+  }
 
   return (
     <div className="w-full flex flex-col">
-      <LoginModal isOpen={isLoginModalOpen} onClose={handleCloseLoginModal} />
+      <LoginModal openSignup={handleOpenSignup} isOpen={isLoginModalOpen} onClose={handleCloseLoginModal} />
+      <SignupModal openLogin={handleOpenLogin} isOpen={isSignupModalOpen} onClose={handleCloseSignupModal} />
       <div className="flex flex-row">
         <div className="w-[0%] md:w-[10%] overflow-x-hidden bg-gray-100 flex justify-center items-center">
           <div className="bg-gray-200 rounded-lg px-4 py-2 text-slate-400">

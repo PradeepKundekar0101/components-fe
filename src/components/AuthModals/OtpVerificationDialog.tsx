@@ -19,7 +19,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useSignupFlowStore } from '@/store/signupFlowStore';
 import api from '@/config/axios';
 import { toast } from 'react-toastify';
 
@@ -39,16 +38,7 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [remainingTime, setRemainingTime] = useState<number>(120); // 2 minutes
   const RESEND_OTP_TIMER = 120;
-
-  // Use the signup flow store
-  const {
-    userEmail,
-    resetFlow,
-    currentStep,
-    moveToResetPasswordStep,
-    setOtpValue,
-    moveToOtpStep
-  } = useSignupFlowStore();
+  const userEmail = localStorage.getItem('email');
 
   const form = useForm<OtpFormValues>({
     resolver: zodResolver(otpSchema),
@@ -109,17 +99,12 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
 
 
   const onSubmit = async (values: OtpFormValues) => {
-    moveToResetPasswordStep();
     setIsLoading(true);
     try {
-      const userEmail = localStorage.getItem('email');
       console.log("userEmail: ", userEmail);
       if (!userEmail) {
         throw new Error("Email not found in state");
       }
-
-      // Store OTP for password reset flow
-      setOtpValue(values.otp);
 
       const response = await api.post('/api/v1/auth/verifyotp', {
         email: userEmail,
@@ -128,14 +113,6 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
 
       if (response.status === 200) {
         toast.success(response.data.message || "Email verified successfully!");
-
-        // if (purpose === 'passwordReset') {
-        //   moveToResetPasswordStep();
-        //   onSuccess();  // Add this line to trigger the success callback
-        // } else {
-        //   resetFlow();
-        //   onSuccess();
-        // }
       } else {
         throw new Error(response.data.message || 'OTP verification failed');
       }
@@ -214,7 +191,6 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
         }
       }
 
-      resetFlow();
       onClose?.();
     } catch (error: any) {
       console.error('Error cancelling registration:', error);
@@ -229,10 +205,6 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
       setIsLoading(false);
     }
   };
-
-  const resetDone = localStorage.getItem('resetPasswordDone') == 'true';
-  if (resetDone) return null;
-  if (!isOpen && currentStep !== 'otp') return null;
 
   return (
     <Dialog open={true} onOpenChange={handleCancel}>

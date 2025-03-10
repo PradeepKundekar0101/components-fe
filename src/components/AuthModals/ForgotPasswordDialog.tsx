@@ -24,7 +24,6 @@ import OtpVerificationDialog from './OtpVerificationDialog';
 import ResetPasswordDialog from './ResetPasswordDialog';
 import api from '@/config/axios';
 import { toast } from 'react-toastify';
-import { useSignupFlowStore } from '@/store/signupFlowStore';
 
 interface ForgotPasswordDialogProps {
   isOpen: boolean;
@@ -38,7 +37,6 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showOtpDialog, setShowOtpDialog] = useState<boolean>(false);
   const [showResetDialog, setShowResetDialog] = useState<boolean>(false);
-  const { startSignupFlow, currentStep, moveToOtpStep } = useSignupFlowStore();
 
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -57,9 +55,6 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
       console.log(signupFlow.state.currentStep);
       localStorage.setItem('signup-flow-storage', JSON.stringify(signupFlow));
     }
-
-    moveToOtpStep(values.email);
-
 
     try {
       const response = await api.post('/api/v1/auth/forgot-password', {
@@ -99,11 +94,6 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
     setShowResetDialog(false);
     onClose();
   };
-
-  // Don't show this dialog if we're in a later step of the flow
-  if (currentStep === 'otp' || currentStep === 'resetPassword') {
-    return null;
-  }
 
   return (
     <>

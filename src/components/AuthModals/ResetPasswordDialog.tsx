@@ -21,7 +21,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useSignupFlowStore } from '@/store/signupFlowStore';
 import api from '@/config/axios';
 import { toast } from 'react-toastify';
 
@@ -39,7 +38,6 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
-  const { userEmail, otpValue, moveToLoginStep } = useSignupFlowStore();
 
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
@@ -67,13 +65,13 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
         throw new Error("Email not found in state");
       }
 
-      if (!otpValue) {
-        throw new Error("OTP not found in state");
-      }
+      // if (!otpValue) {
+      //   throw new Error("OTP not found in state");
+      // }
 
       const resetData = {
         email: userEmail,
-        otp: otpValue,
+        // otp: otpValue,
         password: values.password
       };
 

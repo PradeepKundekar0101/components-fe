@@ -82,7 +82,7 @@ const ProductItem = ({
                   Free shipping above ₹
                   {
                     freeShippingAbove[
-                      product.source as keyof typeof freeShippingAbove
+                    product.source as keyof typeof freeShippingAbove
                     ]
                   }
                 </span>
@@ -108,9 +108,8 @@ const ProductItem = ({
   return (
     <div
       key={product.objectID}
-      className={`flex gap-2 md:gap-4 p-2 md:p-4 ${
-        showMoreData ? "border rounded-lg" : "border-b"
-      }  border-gray-200 transition-all flex-row relative`}
+      className={`flex gap-2 md:gap-4 p-2 md:p-4 ${showMoreData ? "border rounded-lg" : "border-b"
+        }  border-gray-200 transition-all flex-row relative`}
     >
       {showMoreData && (
         <div className="flex flex-col gap-2 absolute top-2 right-4">
@@ -168,9 +167,8 @@ const ProductItem = ({
 
       <div className="flex-grow">
         <h2
-          className={`font-medium mb-1 text-xs md:text-sm ${
-            !showMoreData ? "md:pr-10 pr-8" : "md:pr-32 pr-24"
-          }`}
+          className={`font-medium mb-1 text-xs md:text-sm ${!showMoreData ? "md:pr-10 pr-8" : "md:pr-32 pr-24"
+            }`}
         >
           {highlightText(
             isMobile
@@ -178,38 +176,36 @@ const ProductItem = ({
                 ? product.productName.slice(0, 30) + "..."
                 : product.productName || "Untitled Product"
               : product.productName?.length > 60
-              ? product.productName.slice(0, 60) + "..."
-              : product.productName || "Untitled Product",
+                ? product.productName.slice(0, 60) + "..."
+                : product.productName || "Untitled Product",
             query
           )}
         </h2>
 
         <div className="text-xs mb-1 rounded-none md:text-sm w-full md:w-auto flex items-center">
           <span
-            className={`rounded-full h-2 w-2 mr-1 ${
-              stockString.toLowerCase().includes("in stock") ||
+            className={`rounded-full h-2 w-2 mr-1 ${stockString.toLowerCase().includes("in stock") ||
               Number(product.stock) > 0
-                ? "bg-green-600"
-                : isNaN(Number(product.stock)) || Number(product.stock) === 0
+              ? "bg-green-600"
+              : isNaN(Number(product.stock)) || Number(product.stock) === 0
                 ? "bg-red-500"
                 : "bg-gray-500"
-            }`}
+              }`}
           ></span>
           <span
-            className={`${
-              stockString.toLowerCase().includes("in stock") ||
+            className={`${stockString.toLowerCase().includes("in stock") ||
               Number(product.stock) > 0
-                ? "!text-green-600"
-                : isNaN(Number(product.stock)) || Number(product.stock) === 0
+              ? "!text-green-600"
+              : isNaN(Number(product.stock)) || Number(product.stock) === 0
                 ? "text-red-500"
                 : "text-gray-500"
-            }`}
+              }`}
           >
             {stockString.toLocaleLowerCase() === "out"
               ? "Out of stock"
               : isNaN(Number(product.stock))
-              ? stockString.charAt(0).toUpperCase() + stockString.slice(1)
-              : `${product.stock} left`}
+                ? stockString.charAt(0).toUpperCase() + stockString.slice(1)
+                : `${product.stock} left`}
           </span>
         </div>
 
@@ -247,11 +243,10 @@ const ProductItem = ({
                     <span>Free shipping</span>
                   ) : !eligibleForFreeShipping ? (
                     <span>
-                      {` | Free above ₹${
-                        freeShippingAbove[
-                          product.source as keyof typeof freeShippingAbove
-                        ]
-                      }`}
+                      {` | Free above ₹${freeShippingAbove[
+                        product.source as keyof typeof freeShippingAbove
+                      ]
+                        }`}
                     </span>
                   ) : (
                     ""
