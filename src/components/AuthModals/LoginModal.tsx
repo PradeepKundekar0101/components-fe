@@ -24,21 +24,21 @@ import { Input } from '@/components/ui/input';
 import ForgotPasswordDialog from './ForgotPasswordDialog';
 import { login } from "@/store/authSlice";
 import { useDispatch } from 'react-redux';
-import api from '@/config/axios';
-import { toast } from 'react-toastify';
+import authService from '@/services/authService';
+import useAuthFlow from '@/store/authFlow';
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  openSignup: () => void;
 }
 
-const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, openSignup }) => {
+const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showForgotPassword, setShowForgotPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const userEmail = localStorage.getItem('email');
+  const { setModal } = useAuthFlow();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -57,16 +57,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, openSignup }) 
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
     try {
-      const isEmail = values.identifier.includes('@');
-
-      const loginData = {
-        email: isEmail ? values.identifier : '',
-        password: values.password
-      };
-
-      const response = await api.post('/api/v1/auth/login', loginData);
+      const response = await authService.login(values.identifier, values.password);
 
       if (response.status === 200) {
+        const isEmail = values.identifier.includes('@');
         const authenticatedUser = {
           id: response.data.userId || '',
           firstName: '',
@@ -77,19 +71,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, openSignup }) 
         };
 
         dispatch(login(authenticatedUser));
-        toast.success(response.data.message || "Login successful");
-        onClose();
+        setModal('null');
       }
     } catch (error: any) {
-      console.error('Login failed:', error);
-      let errorMessage = 'Invalid credentials. Please try again.';
-      if (error.response && error.response.data && error.response.data.message) {
-        errorMessage = error.response.data.message;
-      }
-      toast.error(errorMessage);
       form.setError('root', {
         type: 'manual',
-        message: errorMessage
+        message: error.response?.data?.message || 'Invalid credentials. Please try again.'
       });
     } finally {
       setIsLoading(false);
@@ -101,6 +88,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, openSignup }) 
   };
 
   const handleForgotPassword = () => {
+    setModal('forgotpassword');
     setShowForgotPassword(true);
   };
 
@@ -110,7 +98,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, openSignup }) 
 
   const handleOpenSignup = () => {
     onClose();
-    openSignup();
+    setModal('signup');
   };
 
   return (

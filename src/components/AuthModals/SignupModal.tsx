@@ -21,22 +21,22 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import api from '@/config/axios';
-import { toast } from 'react-toastify';
 import { useDispatch } from 'react-redux';
 import { signup } from '@/store/authSlice';
+import authService from '@/services/authService';
+import useAuthFlow from '@/store/authFlow';
 
 interface SignupModalProps {
   isOpen: boolean;
   onClose: () => void;
-  openLogin: () => void;
 }
 
-const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, openLogin }) => {
+const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const dispatch = useDispatch();
+  const authFlow = useAuthFlow();
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -61,15 +61,13 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, openLogin })
 
     setIsLoading(true);
     try {
-      const userData = {
-        firstname: values.firstName,
-        lastname: values.lastName,
+      const response = await authService.signup({
+        firstName: values.firstName,
+        lastName: values.lastName,
         email: values.email,
         phone: values.phone,
         password: values.password
-      };
-
-      const response = await api.post('/api/v1/auth/signup', userData);
+      });
 
       if (response.status === 201 || response.status === 200) {
         const tempUserData = {
@@ -78,24 +76,14 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, openLogin })
           lastName: values.lastName,
           email: values.email,
           phone: values.phone,
-          password: values.password
         };
 
         dispatch(signup(tempUserData));
-        toast.success(response.data.message || "Verification code sent to your email");
       }
     } catch (error: any) {
-      console.error('Signup failed:', error);
-      let errorMessage = 'Signup failed. Please try again.';
-
-      if (error.response && error.response.data && error.response.data.message) {
-        errorMessage = error.response.data.message;
-      }
-
-      toast.error(errorMessage);
       form.setError('root', {
         type: 'manual',
-        message: errorMessage
+        message: error.response?.data?.message || 'Signup failed. Please try again.'
       });
     } finally {
       setIsLoading(false);
@@ -111,8 +99,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, openLogin })
   };
 
   const handleLoginClick = () => {
-    onClose();
-    openLogin();
+    authFlow.setModal('login');
   };
 
   return (

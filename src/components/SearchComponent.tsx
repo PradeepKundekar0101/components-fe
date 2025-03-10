@@ -24,6 +24,7 @@ import { useSearchParams } from "react-router-dom";
 import LoginModal from "@/components/AuthModals/LoginModal";
 import { useSelector } from 'react-redux';
 import SignupModal from "./AuthModals/SignupModal";
+import useAuthFlow from "@/store/authFlow";
 
 export type ProductType = {
   objectID: string;
@@ -50,10 +51,8 @@ const ComponentSearch = () => {
     useState<string[]>(allSourceIds);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalHits, setTotalHits] = useState(0);
-  const isAuthenticated = useSelector((state: any) => state.auth.isAuthenticated);
+  const isVerified = useSelector((state: any) => state.auth.isVerified);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
-
 
   const algoliaClient = axios.create({
     baseURL: `https://${import.meta.env.VITE_ALGOLIA_APP_ID}-dsn.algolia.net`,
@@ -83,8 +82,9 @@ const ComponentSearch = () => {
       localStorage.setItem("searchCount", searchCount.toString());
 
       // Show login modal only if user has searched 3 or more times and is not authenticated
-      if (searchCount >= 3 && !isAuthenticated) {
-        setIsLoginModalOpen(true);
+      if (searchCount >= 3 && !isVerified) {
+        const authFlow = useAuthFlow.getState();
+        // authFlow.setModal("login");
         return;
       }
 
@@ -158,7 +158,7 @@ const ComponentSearch = () => {
         setIsLoading(false);
       }
     }, 300),
-    [selectedSources, isAuthenticated]
+    [selectedSources, isVerified]
   );
 
   const abortControllerRef = React.useRef<AbortController | null>(null);
@@ -210,7 +210,7 @@ const ComponentSearch = () => {
       abortControllerRef.current = new AbortController();
       debouncedSearch(query, 0, abortControllerRef.current.signal);
     }
-  }, [selectedSources, isAuthenticated]);
+  }, [selectedSources, isVerified]);
 
   const totalPages = Math.ceil(totalHits / ITEMS_PER_PAGE);
   const { likedProducts, setLikedProducts } = React.useContext(WishlistContext);
@@ -223,28 +223,8 @@ const ComponentSearch = () => {
     localStorage.setItem("likedProducts", JSON.stringify(updatedProducts));
   };
 
-  const handleOpenSignup = () => {
-    setIsLoginModalOpen(false);
-    setIsSignupModalOpen(true);
-  }
-
-  const handleCloseLoginModal = () => {
-    setIsLoginModalOpen(false);
-  };
-
-  const handleCloseSignupModal = () => {
-    setIsSignupModalOpen(false);
-  }
-
-  const handleOpenLogin = () => {
-    setIsSignupModalOpen(false);
-    setIsLoginModalOpen(true);
-  }
-
   return (
     <div className="w-full flex flex-col">
-      <LoginModal openSignup={handleOpenSignup} isOpen={isLoginModalOpen} onClose={handleCloseLoginModal} />
-      <SignupModal openLogin={handleOpenLogin} isOpen={isSignupModalOpen} onClose={handleCloseSignupModal} />
       <div className="flex flex-row">
         <div className="w-[0%] md:w-[10%] overflow-x-hidden bg-gray-100 flex justify-center items-center">
           <div className="bg-gray-200 rounded-lg px-4 py-2 text-slate-400">

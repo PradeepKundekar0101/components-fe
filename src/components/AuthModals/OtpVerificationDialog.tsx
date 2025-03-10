@@ -19,19 +19,18 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import authService from '@/services/authService';
+import useAuthFlow from '@/store/authFlow';
 import api from '@/config/axios';
-import { toast } from 'react-toastify';
 
 interface OtpVerificationDialogProps {
-  isOpen?: boolean;
-  onClose?: () => void;
-  onSuccess: () => void;
+  isOpen: boolean;
+  onClose: () => void;
   purpose?: 'verification' | 'passwordReset';
 }
 
 const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
   isOpen,
-  onSuccess,
   onClose,
   purpose = 'verification'
 }) => {
@@ -39,6 +38,7 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
   const [remainingTime, setRemainingTime] = useState<number>(120); // 2 minutes
   const RESEND_OTP_TIMER = 120;
   const userEmail = localStorage.getItem('email');
+  const authFlow = useAuthFlow();
 
   const form = useForm<OtpFormValues>({
     resolver: zodResolver(otpSchema),
@@ -47,9 +47,7 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
     },
   });
 
-
   useEffect(() => {
-
     const savedEndTime = localStorage.getItem('otpTimerEndTime');
     const now = new Date().getTime();
 
@@ -96,38 +94,14 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-
-
   const onSubmit = async (values: OtpFormValues) => {
     setIsLoading(true);
     try {
-      console.log("userEmail: ", userEmail);
-      if (!userEmail) {
-        throw new Error("Email not found in state");
-      }
-
-      const response = await api.post('/api/v1/auth/verifyotp', {
-        email: userEmail,
-        otp: values.otp
-      });
-
-      if (response.status === 200) {
-        toast.success(response.data.message || "Email verified successfully!");
-      } else {
-        throw new Error(response.data.message || 'OTP verification failed');
-      }
+      await authService.verifyOtp(values.otp);
     } catch (error: any) {
-      console.error('OTP verification failed:', error);
-      let errorMessage = 'Invalid OTP. Please try again.';
-
-      if (error.response && error.response.data && error.response.data.message) {
-        errorMessage = error.response.data.message;
-      }
-
-      toast.error(errorMessage);
       form.setError('root', {
         type: 'manual',
-        message: errorMessage
+        message: error.response?.data?.message || 'Invalid OTP. Please try again.'
       });
     } finally {
       setIsLoading(false);
@@ -137,21 +111,13 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
   const handleResendOtp = async () => {
     try {
       setIsLoading(true);
-
-      if (!userEmail) {
-        throw new Error("Email not found in state");
-      }
-
-      const response = await api.post('/api/v1/auth/sendotp', {
-        email: userEmail
-      });
+      await authService.resendOtp();
 
       setRemainingTime(RESEND_OTP_TIMER);
       const now = new Date().getTime();
       const endTime = now + (RESEND_OTP_TIMER * 1000);
       localStorage.setItem('otpTimerEndTime', endTime.toString());
 
-      toast.success(response.data.message || "OTP resent successfully!");
       form.setError('root', {
         type: 'manual',
         message: 'OTP resent successfully!',
@@ -161,15 +127,9 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
         form.clearErrors('root');
       }, 3000);
     } catch (error: any) {
-      console.error('Failed to resend OTP:', error);
-      let errorMessage = 'Failed to resend OTP. Please try again.';
-      if (error.response && error.response.data && error.response.data.message) {
-        errorMessage = error.response.data.message;
-      }
-      toast.error(errorMessage);
       form.setError('root', {
         type: 'manual',
-        message: errorMessage
+        message: error.response?.data?.message || 'Failed to resend OTP. Please try again.'
       });
     } finally {
       setIsLoading(false);
@@ -178,36 +138,28 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
 
   const handleCancel = async () => {
     setIsLoading(true);
-    const userId = JSON.parse(localStorage.getItem('user') || 'null')?.id;
     try {
-      if (purpose === 'verification' && userId) {
-        const response = await api.delete(`/api/v1/user/${userId}`);
-        console.log(response)
-
-        if (response.status === 200) {
-          toast.success("Registration cancelled successfully");
-        } else {
-          throw new Error("Failed to cancel registration");
+      if (purpose === 'verification') {
+        const userId = JSON.parse(localStorage.getItem('user') || 'null')?.id;
+        if (userId) {
+          await api.delete(`/api/v1/user/${userId}`);
         }
       }
 
-      onClose?.();
+      authFlow.setModal("null");
+      onClose();
     } catch (error: any) {
-      console.error('Error cancelling registration:', error);
-      let errorMessage = 'Failed to cancel registration. Please try again.';
-
-      if (error.response && error.response.data && error.response.data.message) {
-        errorMessage = error.response.data.message;
-      }
-
-      toast.error(errorMessage);
+      form.setError('root', {
+        type: 'manual',
+        message: error.response?.data?.message || 'Failed to cancel registration. Please try again.'
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Dialog open={true} onOpenChange={handleCancel}>
+    <Dialog open={isOpen} onOpenChange={handleCancel}>
       <DialogContent className="p-6 pt-8 rounded-lg border border-gray-200 sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-gray-800">

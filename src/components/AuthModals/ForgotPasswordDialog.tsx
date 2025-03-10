@@ -20,10 +20,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import OtpVerificationDialog from './OtpVerificationDialog';
-import ResetPasswordDialog from './ResetPasswordDialog';
-import api from '@/config/axios';
-import { toast } from 'react-toastify';
+import authService from '@/services/authService';
+import useAuthFlow from '@/store/authFlow';
 
 interface ForgotPasswordDialogProps {
   isOpen: boolean;
@@ -35,8 +33,7 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
   onClose,
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [showOtpDialog, setShowOtpDialog] = useState<boolean>(false);
-  const [showResetDialog, setShowResetDialog] = useState<boolean>(false);
+  const authFlow = useAuthFlow();
 
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -47,125 +44,70 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
 
   const onSubmit = async (values: ForgotPasswordFormValues) => {
     setIsLoading(true);
-    console.log("onSubmit..")
-    localStorage.setItem("email", values.email);
-    const signupFlow = JSON.parse(localStorage.getItem('signup-flow-storage') || '{}');
-    if (signupFlow.state) {
-      signupFlow.state.currentStep = "otp";
-      console.log(signupFlow.state.currentStep);
-      localStorage.setItem('signup-flow-storage', JSON.stringify(signupFlow));
-    }
-
     try {
-      const response = await api.post('/api/v1/auth/forgot-password', {
-        email: values.email
-      });
-
-      if (response.status === 200) {
-        // startSignupFlow(values.email);
-
-        setShowOtpDialog(true);
-        toast.success(response.data.message || "Reset OTP sent to your email");
-      }
+      await authService.forgotPassword(values.email);
     } catch (error: any) {
-      console.error('Password reset request failed:', error);
-      let errorMessage = 'Failed to send reset email. Please try again.';
-
-      if (error.response && error.response.data && error.response.data.message) {
-        errorMessage = error.response.data.message;
-      }
-
-      toast.error(errorMessage);
       form.setError('root', {
         type: 'manual',
-        message: errorMessage
+        message: error.response?.data?.message || 'Failed to send reset email. Please try again.'
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleOtpVerificationSuccess = () => {
-    setShowOtpDialog(false);
-    onClose(); // Close this dialog completely, let the flow state handle the rest
-  };
-
-  const handleResetPasswordSuccess = () => {
-    setShowResetDialog(false);
-    onClose();
-  };
-
   return (
-    <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="p-6 pt-8 rounded-lg shadow-xl border border-gray-200 sm:max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-gray-800">
-              Reset Your Password
-            </DialogTitle>
-            <DialogDescription className="text-gray-600">
-              Enter your email address and we'll send you a verification code to reset your password.
-            </DialogDescription>
-          </DialogHeader>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="p-6 pt-8 rounded-lg shadow-xl border border-gray-200 sm:max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold text-gray-800">
+            Reset Your Password
+          </DialogTitle>
+          <DialogDescription className="text-gray-600">
+            Enter your email address and we'll send you a verification code to reset your password.
+          </DialogDescription>
+        </DialogHeader>
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-medium text-gray-700">Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="Enter your email address"
-                        className="border-gray-300 focus:ring-red-500 focus:border-red-500"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {form.formState.errors.root && (
-                <p className="text-sm font-medium text-red-500">
-                  {form.formState.errors.root.message}
-                </p>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-medium text-gray-700">Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="Enter your email address"
+                      className="border-gray-300 focus:ring-red-500 focus:border-red-500"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
+            />
 
-              <DialogFooter className="pt-4">
-                <Button
-                  type="submit"
-                  className="w-full bg-red-600 text-white hover:bg-red-500"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Sending..." : "Send Reset Link"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+            {form.formState.errors.root && (
+              <p className="text-sm font-medium text-red-500">
+                {form.formState.errors.root.message}
+              </p>
+            )}
 
-      {showOtpDialog && (
-        <OtpVerificationDialog
-          isOpen={showOtpDialog}
-          onClose={() => setShowOtpDialog(false)}
-          onSuccess={handleOtpVerificationSuccess}
-          purpose="passwordReset"
-        />
-      )}
-
-      {showResetDialog && (
-        <ResetPasswordDialog
-          isOpen={showResetDialog}
-          onClose={() => setShowResetDialog(false)}
-          onSuccess={handleResetPasswordSuccess}
-        />
-      )}
-    </>
+            <DialogFooter className="pt-4">
+              <Button
+                type="submit"
+                className="w-full bg-red-600 text-white hover:bg-red-500"
+                disabled={isLoading}
+              >
+                {isLoading ? "Sending..." : "Send Reset Link"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 };
 

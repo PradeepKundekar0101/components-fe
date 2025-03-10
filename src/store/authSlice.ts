@@ -29,13 +29,11 @@ const authSlice = createSlice({
       state.user = action.payload;
       state.isVerified = true;
       localStorage.setItem("user", JSON.stringify(action.payload));
-      toast.success("Signup successful");
     },
     login: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
       state.isVerified = true;
       localStorage.setItem("user", JSON.stringify(action.payload));
-      toast.success("Login successful");
     },
     logout: (state) => {
       state.user = null;

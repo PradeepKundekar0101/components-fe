@@ -7,6 +7,7 @@ import { store } from "./store";
 import { ToastContainer } from "react-toastify";
 import InstallationGuide from "./components/InstallationGuide";
 import AccouncementBanner from "./components/AccouncementBanner"
+import ModalController from "./components/AuthModals/ModalController";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
       <AccouncementBanner />
 
       <Provider store={store}>
+        <ModalController />
         <WishlistProvider>
           <Navbar />
           <SearchComponent />

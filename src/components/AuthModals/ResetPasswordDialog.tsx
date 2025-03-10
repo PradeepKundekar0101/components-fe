@@ -21,8 +21,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import api from '@/config/axios';
-import { toast } from 'react-toastify';
+import authService from '@/services/authService';
 
 interface ResetPasswordDialogProps {
   isOpen: boolean;
@@ -56,39 +55,12 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
       return;
     }
 
-    const userEmail = localStorage.getItem('email');
-
+    // localStorage.setItem('resetPasswordDone', 'true');
     setIsLoading(true);
     try {
-
-      if (!userEmail) {
-        throw new Error("Email not found in state");
-      }
-
-      // if (!otpValue) {
-      //   throw new Error("OTP not found in state");
-      // }
-
-      const resetData = {
-        email: userEmail,
-        // otp: otpValue,
-        password: values.password
-      };
-
-      const response = await api.post('/api/v1/auth/reset-password', resetData);
+      const response = await authService.resetPassword(values.password);
 
       if (response.status === 200) {
-        const { token, user } = response.data;
-
-        // Store in localStorage
-        localStorage.setItem('resetPasswordDone', 'true');
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-
-        toast.success("Password reset successfully and Logged In");
-
-        // moveToLoginStep();
-
         if (onClose) {
           onClose();
         }
@@ -99,22 +71,22 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
       }
     } catch (error: any) {
       console.error('Password reset failed:', error);
-      let errorMessage = 'Failed to reset password. Please try again.';
 
       if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
+        form.setError('root', {
+          type: 'manual',
+          message: error.response.data.message
+        });
+      } else {
+        form.setError('root', {
+          type: 'manual',
+          message: 'Failed to reset password. Please try again.'
+        });
       }
-
-      toast.error(errorMessage);
-      form.setError('root', {
-        type: 'manual',
-        message: errorMessage
-      });
     } finally {
       setIsLoading(false);
     }
   };
-
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
