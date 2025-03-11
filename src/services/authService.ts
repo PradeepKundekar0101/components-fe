@@ -32,6 +32,8 @@ class AuthService {
       
       if (response.status === 201 || response.status === 200) {
         localStorage.setItem('email', userData.email);
+        localStorage.setItem('token', response.data.token);
+        
         
         const authFlow = useAuthFlow.getState();
         authFlow.setModal('otp');
@@ -63,7 +65,7 @@ class AuthService {
       
       if (response.status === 200) {
         const { token, user } = response.data;
-        
+
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
         
@@ -228,7 +230,7 @@ class AuthService {
     localStorage.removeItem('currentModal');
     
     const authFlow = useAuthFlow.getState();
-    authFlow.setModal("null");
+    authFlow.setModal("login");
     
     toast.info("Logged out successfully");
   }

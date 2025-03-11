@@ -18,7 +18,7 @@ type AuthState = {
 
 const initialState: AuthState = {
   user: JSON.parse(localStorage.getItem("user") || "null"),
-  isVerified: !!localStorage.getItem("user") && !!JSON.parse(localStorage.getItem("user") || "null")?.token,
+  isVerified: !!localStorage.getItem("token")
 };
 
 const authSlice = createSlice({
@@ -27,22 +27,27 @@ const authSlice = createSlice({
   reducers: {
     signup: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
-      state.isVerified = true;
+      state.isVerified = !!action.payload.token;
       localStorage.setItem("user", JSON.stringify(action.payload));
     },
     login: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
-      state.isVerified = true;
+      state.isVerified = !!action.payload.token;
       localStorage.setItem("user", JSON.stringify(action.payload));
     },
     logout: (state) => {
       state.user = null;
       state.isVerified = false;
       localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      localStorage.removeItem("email");
       toast.error("You have been logged out.");
+    },
+    setVerification: (state, action: PayloadAction<boolean>) => {
+      state.isVerified = action.payload;
     },
   },
 });
 
-export const { login, logout, signup } = authSlice.actions;
+export const { login, logout, signup, setVerification  } = authSlice.actions;
 export default authSlice.reducer;

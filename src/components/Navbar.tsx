@@ -1,18 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChevronDown, Menu } from "lucide-react";
 import { FaFacebook, FaTwitterSquare, FaPinterest } from "react-icons/fa";
 import img from "../assets/logo.png";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logout } from "@/store/authSlice";
 
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openCategory, setOpenCategory] = useState<string | null>(null);
+  const isVerified = useSelector((state: any) => state.auth.isVerified);
   const dispatch = useDispatch();
-
-  // const handleSubmenuClick = (category: string, item: string) => {
-  //   console.log(`${category} - ${item} clicked`);
-  // };
 
   const dropdownOptions = {
     PCBWAY: [
@@ -216,31 +213,32 @@ const Navbar: React.FC = () => {
             {Object.entries(dropdownOptions).map(([category, options]) => (
               <div key={category} className="relative group">
                 {category === "ACCOUNT" ? (
-                  <div className="relative">
-                    <button className="w-8 h-8 rounded-full flex items-center justify-center">
-                      <img
-                        src="https://static.vecteezy.com/system/resources/thumbnails/024/983/914/small_2x/simple-user-default-icon-free-png.png"
-                        alt="Profile"
-                        className="w-7 h-7 rounded-full"
-                      />
-                    </button>
-                    <div className="absolute right-0 mt-0 hidden group-hover:block bg-white text-gray-600 text-sm rounded shadow-lg z-20">
-                      {options.map((option) => (
-                        <button
-                          key={option.name}
-                          onClick={() => {
-                            if (option.name === "Logout") {
-                              console.log('clicked logout');
-                              dispatch(logout());
-                            }
-                          }}
-                          className="block w-full text-left px-4 py-2 hover:bg-gray-200 hover:text-red-600 transition-colors duration-300"
-                        >
-                          {option.name}
-                        </button>
-                      ))}
+                  isVerified && (
+                    <div className="relative">
+                      <button className="w-8 h-8 rounded-full flex items-center justify-center">
+                        <img
+                          src="https://static.vecteezy.com/system/resources/thumbnails/024/983/914/small_2x/simple-user-default-icon-free-png.png"
+                          alt="Profile"
+                          className="w-7 h-7 rounded-full"
+                        />
+                      </button>
+                      <div className="absolute right-0 mt-0 hidden group-hover:block bg-white text-gray-600 text-sm rounded shadow-lg z-20">
+                        {options.map((option) => (
+                          <button
+                            key={option.name}
+                            onClick={() => {
+                              if (option.name === "Logout") {
+                                dispatch(logout());
+                              }
+                            }}
+                            className="block w-full text-left px-4 py-2 hover:bg-gray-200 hover:text-red-600 transition-colors duration-300"
+                          >
+                            {option.name}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )
                 ) : (
                   <>
                     {category !== "PCBWAY" && (

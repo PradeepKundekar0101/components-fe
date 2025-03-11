@@ -48,45 +48,34 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
   });
 
   useEffect(() => {
-    const savedEndTime = localStorage.getItem('otpTimerEndTime');
+    let timer: NodeJS.Timeout;
+    const savedEndTime = localStorage.getItem("otpTimerEndTime");
     const now = new Date().getTime();
 
     if (savedEndTime) {
       const endTime = parseInt(savedEndTime);
       const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+      setRemainingTime(remaining);
 
-      if (remaining <= 0) {
-        setRemainingTime(0);
-        localStorage.removeItem('otpTimerEndTime');
-      } else {
-        setRemainingTime(remaining);
-      }
-    } else {
-      setRemainingTime(RESEND_OTP_TIMER);
-      const endTime = now + (RESEND_OTP_TIMER * 1000);
-      localStorage.setItem('otpTimerEndTime', endTime.toString());
-    }
+      if (remaining > 0) {
+        timer = setInterval(() => {
+          const updatedRemaining = Math.max(0, Math.floor((endTime - new Date().getTime()) / 1000));
+          setRemainingTime(updatedRemaining);
 
-    let timer: NodeJS.Timeout;
-
-    if (remainingTime > 0) {
-      timer = setInterval(() => {
-        setRemainingTime((prevTime) => {
-          const newTime = prevTime - 1;
-          if (newTime <= 0) {
+          if (updatedRemaining <= 0) {
             clearInterval(timer);
-            localStorage.removeItem('otpTimerEndTime');
-            return 0;
+            localStorage.removeItem("otpTimerEndTime");
           }
-          return newTime;
-        });
-      }, 1000);
+        }, 1000);
+      } else {
+        localStorage.removeItem("otpTimerEndTime");
+      }
     }
 
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, []);
+    return () => clearInterval(timer);
+  }, [isOpen]);
+
+
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -114,27 +103,26 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
       await authService.resendOtp();
 
       setRemainingTime(RESEND_OTP_TIMER);
-      const now = new Date().getTime();
-      const endTime = now + (RESEND_OTP_TIMER * 1000);
-      localStorage.setItem('otpTimerEndTime', endTime.toString());
+      localStorage.setItem("otpTimerEndTime", (new Date().getTime() + RESEND_OTP_TIMER * 1000).toString());
 
-      form.setError('root', {
-        type: 'manual',
-        message: 'OTP resent successfully!',
+      form.setError("root", {
+        type: "manual",
+        message: "OTP resent successfully!",
       });
 
       setTimeout(() => {
-        form.clearErrors('root');
+        form.clearErrors("root");
       }, 3000);
     } catch (error: any) {
-      form.setError('root', {
-        type: 'manual',
-        message: error.response?.data?.message || 'Failed to resend OTP. Please try again.'
+      form.setError("root", {
+        type: "manual",
+        message: error.response?.data?.message || "Failed to resend OTP. Please try again.",
       });
     } finally {
       setIsLoading(false);
     }
   };
+
 
   const handleCancel = async () => {
     setIsLoading(true);
@@ -160,7 +148,7 @@ const OtpVerificationDialog: React.FC<OtpVerificationDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
-      <DialogContent className="p-6 pt-8 rounded-lg border border-gray-200 sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent onInteractOutside={(e) => e.preventDefault()} className="p-6 pt-8 rounded-lg border border-gray-200 sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-gray-800">
             {purpose === 'passwordReset' ? 'Verify OTP' : 'Verify Your Email'}

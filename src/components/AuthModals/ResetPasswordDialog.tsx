@@ -22,6 +22,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import authService from '@/services/authService';
+import { useDispatch } from 'react-redux';
+import { setVerification } from '@/store/authSlice';
 
 interface ResetPasswordDialogProps {
   isOpen: boolean;
@@ -37,6 +39,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  const dispatch = useDispatch()
 
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
@@ -59,7 +62,6 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
     setIsLoading(true);
     try {
       const response = await authService.resetPassword(values.password);
-
       if (response.status === 200) {
         if (onClose) {
           onClose();
@@ -69,6 +71,8 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
           onSuccess();
         }
       }
+
+      dispatch(setVerification(true))
     } catch (error: any) {
       console.error('Password reset failed:', error);
 
@@ -98,7 +102,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="p-6 pt-8 rounded-lg shadow-xl border border-gray-200 sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent onInteractOutside={(e) => e.preventDefault()} className="p-6 pt-8 rounded-lg shadow-xl border border-gray-200 sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-gray-800">
             Reset Your Password

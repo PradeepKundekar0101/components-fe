@@ -71,6 +71,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         };
 
         dispatch(login(authenticatedUser));
+
         setModal('null');
       }
     } catch (error: any) {
@@ -104,7 +105,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="p-6 pt-10 rounded-lg shadow-xl border border-gray-200 sm:max-w-md max-h-[90vh] overflow-y-auto !focus:outline-none">
+        <DialogContent onInteractOutside={(e) => e.preventDefault()} className="p-6 pt-10 rounded-lg shadow-xl border border-gray-200 sm:max-w-md max-h-[90vh] overflow-y-auto !focus:outline-none">
           <DialogHeader className="text-center">
             <DialogTitle className="text-2xl font-bold text-gray-800 mt-4">Login to your account</DialogTitle>
             <DialogDescription className="text-gray-500">

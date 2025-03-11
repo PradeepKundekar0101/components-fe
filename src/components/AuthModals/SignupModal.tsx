@@ -76,6 +76,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
           lastName: values.lastName,
           email: values.email,
           phone: values.phone,
+          token: response.data.token
         };
 
         dispatch(signup(tempUserData));
@@ -104,7 +105,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="px-6 py-4 rounded-lg shadow-xl border border-gray-200 sm:max-w-md max-h-[90vh] overflow-y-auto !focus:outline-none">
+      <DialogContent onInteractOutside={(e) => e.preventDefault()} className="px-6 py-4 rounded-lg shadow-xl border border-gray-200 sm:max-w-md max-h-[90vh] overflow-y-auto !focus:outline-none">
         <DialogHeader className="text-center">
           <DialogTitle className="text-2xl font-bold text-gray-800 mt-4">Create an account</DialogTitle>
           <DialogDescription className="text-gray-500">

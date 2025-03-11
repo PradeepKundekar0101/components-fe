@@ -84,7 +84,11 @@ const ComponentSearch = () => {
       // Show login modal only if user has searched 3 or more times and is not authenticated
       if (searchCount >= 3 && !isVerified) {
         const authFlow = useAuthFlow.getState();
-        // authFlow.setModal("login");
+        const user = localStorage.getItem("user");
+        if (authFlow.currentModal === "null" && user === null) {
+          authFlow.setModal("login");
+        }
+
         return;
       }
 
