@@ -23,6 +23,7 @@ import BrandList from "./BrandList";
 import { useSearchParams } from "react-router-dom";
 import { useSelector } from 'react-redux';
 import useAuthFlow from "@/store/authFlow";
+import { usePostHog } from "posthog-js/react";
 
 export type ProductType = {
   objectID: string;
@@ -50,6 +51,7 @@ const ComponentSearch = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalHits, setTotalHits] = useState(0);
   const isVerified = useSelector((state: any) => state.auth.isVerified);
+  const posthog = usePostHog();
 
   const algoliaClient = axios.create({
     baseURL: `https://${import.meta.env.VITE_ALGOLIA_APP_ID}-dsn.algolia.net`,
@@ -129,6 +131,16 @@ const ComponentSearch = () => {
         },
         { signal }
       );
+
+      const normalizedQuery = searchQuery.toLowerCase().trim();
+      posthog.capture("search_query", {
+        query: normalizedQuery,
+        $set: {
+          [`search_count_${normalizedQuery}`]: {
+            $increment: 1,
+          },
+        },
+      });
 
       const fetchedResults = response.data.hits;
       setResults(fetchedResults);
