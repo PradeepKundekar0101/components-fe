@@ -21,7 +21,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import authService from '@/services/authService';
-import useAuthFlow from '@/store/authFlow';
 
 interface ForgotPasswordDialogProps {
   isOpen: boolean;
@@ -33,7 +32,6 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
   onClose,
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const authFlow = useAuthFlow();
 
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),

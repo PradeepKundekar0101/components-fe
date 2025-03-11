@@ -21,9 +21,7 @@ import FeatureCards from "./FeatureCards";
 import BrandList from "./BrandList";
 // import { usePostHog } from "posthog-js/react";
 import { useSearchParams } from "react-router-dom";
-import LoginModal from "@/components/AuthModals/LoginModal";
 import { useSelector } from 'react-redux';
-import SignupModal from "./AuthModals/SignupModal";
 import useAuthFlow from "@/store/authFlow";
 
 export type ProductType = {
@@ -52,7 +50,6 @@ const ComponentSearch = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalHits, setTotalHits] = useState(0);
   const isVerified = useSelector((state: any) => state.auth.isVerified);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const algoliaClient = axios.create({
     baseURL: `https://${import.meta.env.VITE_ALGOLIA_APP_ID}-dsn.algolia.net`,

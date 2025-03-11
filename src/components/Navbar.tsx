@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ChevronDown, Menu } from "lucide-react";
 import { FaFacebook, FaTwitterSquare, FaPinterest } from "react-icons/fa";
 import img from "../assets/logo.png";
