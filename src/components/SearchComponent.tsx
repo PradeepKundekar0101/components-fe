@@ -19,8 +19,12 @@ import { sites } from "@/config";
 import { WishlistContext, WishlistDrawer } from "./Wishlist";
 import FeatureCards from "./FeatureCards";
 import BrandList from "./BrandList";
-import { usePostHog } from "posthog-js/react";
+// import { usePostHog } from "posthog-js/react";
 import { useSearchParams } from "react-router-dom";
+import { useSelector } from 'react-redux';
+import useAuthFlow from "@/store/authFlow";
+import { usePostHog } from "posthog-js/react";
+
 export type ProductType = {
   objectID: string;
   productName: string;
@@ -46,6 +50,7 @@ const ComponentSearch = () => {
     useState<string[]>(allSourceIds);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalHits, setTotalHits] = useState(0);
+  const isVerified = useSelector((state: any) => state.auth.isVerified);
   const posthog = usePostHog();
 
   const algoliaClient = axios.create({
@@ -70,7 +75,22 @@ const ComponentSearch = () => {
         return;
       }
 
-      // Get the list of allowed sources
+      // Increment search count in localStorage
+      let searchCount = parseInt(localStorage.getItem("searchCount") || "0", 10);
+      searchCount += 1;
+      localStorage.setItem("searchCount", searchCount.toString());
+
+      // Show login modal only if user has searched 3 or more times and is not authenticated
+      if (searchCount >= 3 && !isVerified) {
+        const authFlow = useAuthFlow.getState();
+        const user = localStorage.getItem("user");
+        if (authFlow.currentModal === "null" && user === null) {
+          authFlow.setModal("login");
+        }
+
+        return;
+      }
+
       const allowedSources = sites
         .filter((site) => site.isAllowed)
         .map((site) => site.name);
@@ -113,7 +133,6 @@ const ComponentSearch = () => {
       );
 
       const normalizedQuery = searchQuery.toLowerCase().trim();
-
       posthog.capture("search_query", {
         query: normalizedQuery,
         $set: {
@@ -123,9 +142,13 @@ const ComponentSearch = () => {
         },
       });
 
-      setResults(response.data.hits);
+      const fetchedResults = response.data.hits;
+      setResults(fetchedResults);
       setTotalHits(response.data.nbHits);
+
+
     } catch (error) {
+      console.log(error)
       if (axios.isCancel(error)) {
         console.log("Request cancelled");
       } else {
@@ -135,6 +158,7 @@ const ComponentSearch = () => {
       setIsLoading(false);
     }
   };
+
 
   const debouncedSearch = useCallback(
     debounce((searchQuery: string, page: number, signal?: AbortSignal) => {
@@ -147,7 +171,7 @@ const ComponentSearch = () => {
         setIsLoading(false);
       }
     }, 300),
-    [selectedSources]
+    [selectedSources, isVerified]
   );
 
   const abortControllerRef = React.useRef<AbortController | null>(null);
@@ -179,6 +203,8 @@ const ComponentSearch = () => {
     debouncedSearch(query, newPage, abortControllerRef.current.signal);
   };
 
+
+
   React.useEffect(() => {
     return () => {
       if (abortControllerRef.current) {
@@ -197,7 +223,7 @@ const ComponentSearch = () => {
       abortControllerRef.current = new AbortController();
       debouncedSearch(query, 0, abortControllerRef.current.signal);
     }
-  }, [selectedSources]);
+  }, [selectedSources, isVerified]);
 
   const totalPages = Math.ceil(totalHits / ITEMS_PER_PAGE);
   const { likedProducts, setLikedProducts } = React.useContext(WishlistContext);
@@ -211,14 +237,14 @@ const ComponentSearch = () => {
   };
 
   return (
-    <div className="w-full flex flex-col ">
+    <div className="w-full flex flex-col">
       <div className="flex flex-row">
         <div className="w-[0%] md:w-[10%] overflow-x-hidden bg-gray-100 flex justify-center items-center">
           <div className="bg-gray-200 rounded-lg px-4 py-2 text-slate-400">
             Ads
           </div>
         </div>
-        <div className="min-h-screen w-[100%] md:w-[50%] flex flex-col mt-32 overflow-x-hidden">
+        <div className="min-h-screen w-[100%] md:w-[50%] flex flex-col pt-40 md:pt-36 overflow-x-hidden">
           <div className="flex-1">
             <div className="max-w-xl md:max-w-5xl mx-auto p-4">
               <div className="flex items-center justify-between mb-2 md:mb-4">
@@ -318,7 +344,7 @@ const ComponentSearch = () => {
                           <div className="flex items-center gap-1">
                             {[...Array(Math.min(5, totalPages))].map(
                               (_, index) => {
-                                let pageNumber;
+                                let pageNumber = 0;
                                 if (totalPages <= 5) {
                                   pageNumber = index;
                                 } else if (currentPage <= 2) {

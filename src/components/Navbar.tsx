@@ -2,14 +2,14 @@ import React, { useState } from "react";
 import { ChevronDown, Menu } from "lucide-react";
 import { FaFacebook, FaTwitterSquare, FaPinterest } from "react-icons/fa";
 import img from "../assets/logo.png";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "@/store/authSlice";
 
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openCategory, setOpenCategory] = useState<string | null>(null);
-
-  // const handleSubmenuClick = (category: string, item: string) => {
-  //   console.log(`${category} - ${item} clicked`);
-  // };
+  const isVerified = useSelector((state: any) => state.auth.isVerified);
+  const dispatch = useDispatch();
 
   const dropdownOptions = {
     PCBWAY: [
@@ -124,6 +124,9 @@ const Navbar: React.FC = () => {
       { name: "Cables", url: "https://components101.com/cables" },
       { name: "Misc", url: "https://components101.com/misc" },
     ],
+    ACCOUNT: [
+      { name: "Logout", url: "/" },
+    ],
   };
   const toggleCategory = (category: string) => {
     setOpenCategory(openCategory === category ? null : category);
@@ -209,37 +212,64 @@ const Navbar: React.FC = () => {
 
             {Object.entries(dropdownOptions).map(([category, options]) => (
               <div key={category} className="relative group">
-                {category !== "PCBWAY" && (
-                  <div className="flex items-center space-x-2">
-                    <a
-                      href="https://components101.com"
-                      className="hover:text-red-600 transition-colors duration-300"
-                    >
-                      {category}
-                      {category === "PCBWAY" && (
-                        <span className="ml-2 text-xs bg-red-600 text-white px-2 py-1 rounded-full">
-                          New
-                        </span>
-                      )}
-                    </a>
-                    <ChevronDown className="w-4 h-4 transform group-hover:rotate-180 transition-transform duration-300" />
-                  </div>
+                {category === "ACCOUNT" ? (
+                  isVerified && (
+                    <div className="relative">
+                      <button className="w-8 h-8 rounded-full flex items-center justify-center">
+                        <img
+                          src="https://static.vecteezy.com/system/resources/thumbnails/024/983/914/small_2x/simple-user-default-icon-free-png.png"
+                          alt="Profile"
+                          className="w-7 h-7 rounded-full"
+                        />
+                      </button>
+                      <div className="absolute right-0 mt-0 hidden group-hover:block bg-white text-gray-600 text-sm rounded shadow-lg z-20">
+                        {options.map((option) => (
+                          <button
+                            key={option.name}
+                            onClick={() => {
+                              if (option.name === "Logout") {
+                                dispatch(logout());
+                              }
+                            }}
+                            className="block w-full text-left px-4 py-2 hover:bg-gray-200 hover:text-red-600 transition-colors duration-300"
+                          >
+                            {option.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                ) : (
+                  <>
+                    {category !== "PCBWAY" && (
+                      <div className="flex items-center space-x-2">
+                        <a
+                          href="https://components101.com"
+                          className="hover:text-red-600 transition-colors duration-300"
+                        >
+                          {category}
+                        </a>
+                        <ChevronDown className="w-4 h-4 transform group-hover:rotate-180 transition-transform duration-300" />
+                      </div>
+                    )}
+                    <div className="absolute left-0 mt-0 hidden group-hover:block bg-white text-gray-600 text-sm rounded shadow-lg z-20">
+                      {options.map((option) => (
+                        <a
+                          key={option.name}
+                          href={option.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block py-2 px-4 text-nowrap hover:bg-gray-200 hover:text-red-600 transition-colors duration-300"
+                        >
+                          {option.name}
+                        </a>
+                      ))}
+                    </div>
+                  </>
                 )}
-                <div className="absolute left-0 mt-0 hidden group-hover:block bg-white text-gray-600 text-sm rounded shadow-lg z-20">
-                  {options.map((option) => (
-                    <a
-                      key={option.name}
-                      href={option.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block py-2 px-4 text-nowrap hover:bg-gray-200 hover:text-red-600 transition-colors duration-300"
-                    >
-                      {option.name}
-                    </a>
-                  ))}
-                </div>
               </div>
             ))}
+
           </nav>
         </div>
       </div>

@@ -18,7 +18,7 @@ export const WishlistContext = React.createContext<{
   setLikedProducts: React.Dispatch<React.SetStateAction<ProductType[]>>;
 }>({
   likedProducts: [],
-  setLikedProducts: () => {},
+  setLikedProducts: () => { },
 });
 
 export const WishlistProvider = ({
@@ -154,10 +154,9 @@ export const LikeButton = ({ product }: { product: ProductType }) => {
         flex items-center justify-center
         h-6 w-6 md:h-6 md:w-6
         rounded-full p-0
-        ${
-          isLiked
-            ? "text-white hover:text-white"
-            : "bg-white text-gray-700 hover:bg-gray-100"
+        ${isLiked
+          ? "text-white hover:text-white"
+          : "bg-white text-gray-700 hover:bg-gray-100"
         }
         transition-all duration-200 ease-in-out
         transform hover:scale-105
