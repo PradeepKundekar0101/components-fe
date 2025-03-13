@@ -11,14 +11,28 @@ import { Button } from "@/components/ui/button";
 import { ProductType } from "./SearchComponent";
 import ProductItem from "./ui/ProductItem";
 import { Badge } from "@/components/ui/badge";
+import { wishlistService } from "@/services/wishlistService";
+import { useSelector } from "react-redux";
+
+export type EnhancedProductType = ProductType & {
+  mongodbID?: string;
+};
 
 // Create a context to manage wishlist state globally
 export const WishlistContext = React.createContext<{
-  likedProducts: ProductType[];
-  setLikedProducts: React.Dispatch<React.SetStateAction<ProductType[]>>;
+  likedProducts: EnhancedProductType[];
+  setLikedProducts: React.Dispatch<React.SetStateAction<EnhancedProductType[]>>;
+  addToWishlist: (product: EnhancedProductType) => Promise<void>;
+  removeFromWishlist: (product: EnhancedProductType) => Promise<void>;
+  isProductWishlisted: (objectID: string) => boolean;
+  isSyncing: boolean;
 }>({
   likedProducts: [],
   setLikedProducts: () => { },
+  addToWishlist: async () => { },
+  removeFromWishlist: async () => { },
+  isProductWishlisted: () => false,
+  isSyncing: false,
 });
 
 export const WishlistProvider = ({
@@ -26,17 +40,120 @@ export const WishlistProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [likedProducts, setLikedProducts] = React.useState<ProductType[]>([]);
+  const [likedProducts, setLikedProducts] = React.useState<EnhancedProductType[]>([]);
+  const [isSyncing, setIsSyncing] = React.useState(false);
+  const isAuthenticated = useSelector((state: any) => state.auth.isVerified);
 
+  // Fetch wishlisted products from backend on initial load
   React.useEffect(() => {
-    const liked = localStorage.getItem("likedProducts");
-    if (liked) {
-      setLikedProducts(JSON.parse(liked));
+    const fetchWishlistedProducts = async () => {
+      if (isAuthenticated) {
+        try {
+          setIsSyncing(true);
+          const wishlistData = await wishlistService.getUserWishlists();
+          // Map backend data to EnhancedProductType
+          const enhancedWishlist = wishlistData.map((item: any) => ({
+            objectID: item.objectID || item._id,
+            productName: item.productName,
+            price: item.price,
+            stock: item.stock,
+            imageUrl: item.imageUrl,
+            productUrl: item.productUrl,
+            category: item.category,
+            source: item.source,
+            sourceImage: item.sourceImage,
+            mongodbID: item._id,
+          }));
+          setLikedProducts(enhancedWishlist);
+        } catch (error) {
+          console.error("Failed to fetch wishlist:", error);
+          // If API fails, try to load from localStorage as fallback
+          const liked = localStorage.getItem("likedProducts");
+          if (liked) {
+            setLikedProducts(JSON.parse(liked));
+          }
+        } finally {
+          setIsSyncing(false);
+        }
+      } else {
+        // Not authenticated, use localStorage
+        const liked = localStorage.getItem("likedProducts");
+        if (liked) {
+          setLikedProducts(JSON.parse(liked));
+        }
+      }
+    };
+
+    fetchWishlistedProducts();
+  }, [isAuthenticated]);
+
+  // Check if a product is in the wishlist
+  const isProductWishlisted = (objectID: string) => {
+    return likedProducts.some((p) => p.objectID === objectID);
+  };
+
+  // Add product to wishlist
+  const addToWishlist = async (product: EnhancedProductType) => {
+    try {
+      if (isAuthenticated) {
+        setIsSyncing(true);
+        const response = await wishlistService.addWishlist(product);
+
+        // Add mongodbID from backend to the product
+        const enhancedProduct = {
+          ...product,
+          mongodbID: response.mongodbID,
+        };
+
+        // Update state and localStorage
+        const updatedProducts = [...likedProducts, enhancedProduct];
+        setLikedProducts(updatedProducts);
+        localStorage.setItem("likedProducts", JSON.stringify(updatedProducts));
+      } else {
+        // Not authenticated, just update localStorage
+        const updatedProducts = [...likedProducts, product];
+        setLikedProducts(updatedProducts);
+        localStorage.setItem("likedProducts", JSON.stringify(updatedProducts));
+      }
+    } catch (error) {
+      console.error("Failed to add to wishlist:", error);
+    } finally {
+      setIsSyncing(false);
     }
-  }, []);
+  };
+
+  // Remove product from wishlist
+  const removeFromWishlist = async (product: EnhancedProductType) => {
+    try {
+      if (isAuthenticated && product.mongodbID) {
+        setIsSyncing(true);
+        await wishlistService.deleteWishlist(product.mongodbID);
+      }
+
+      // Always update local state regardless of API result
+      const updatedProducts = likedProducts.filter(
+        (p) => p.objectID !== product.objectID
+      );
+      setLikedProducts(updatedProducts);
+      localStorage.setItem("likedProducts", JSON.stringify(updatedProducts));
+    } catch (error) {
+      console.error("Failed to remove from wishlist:", error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   return (
-    <WishlistContext.Provider value={{ likedProducts, setLikedProducts }}>
+    <WishlistContext.Provider
+      value={{
+        likedProducts,
+        setLikedProducts,
+        addToWishlist,
+        removeFromWishlist,
+        isProductWishlisted,
+        isSyncing
+      }}
+    >
       {children}
     </WishlistContext.Provider>
   );
@@ -49,15 +166,11 @@ export const WishlistDrawer = ({
   title: string;
   showBadge: boolean;
 }) => {
-  const { likedProducts, setLikedProducts } = React.useContext(WishlistContext);
+  const { likedProducts, removeFromWishlist, isSyncing } = React.useContext(WishlistContext);
   const [open, setOpen] = React.useState(false);
 
-  const removeFromWishlist = (productId: string) => {
-    const updatedProducts = likedProducts.filter(
-      (p) => p.objectID !== productId
-    );
-    setLikedProducts(updatedProducts);
-    localStorage.setItem("likedProducts", JSON.stringify(updatedProducts));
+  const handleRemoveFromWishlist = async (product: EnhancedProductType) => {
+    await removeFromWishlist(product);
   };
 
   return (
@@ -66,6 +179,7 @@ export const WishlistDrawer = ({
         <Button
           variant="outline"
           className="flex items-center justify-center w-full gap-2 relative text-xs md:text-sm px-2 md:px-3 py-1 md:py-2"
+          disabled={isSyncing}
         >
           <Heart className="h-4 w-4" />
           {title}
@@ -113,7 +227,8 @@ export const WishlistDrawer = ({
                   variant="ghost"
                   size="sm"
                   className="absolute top-2 right-2 h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                  onClick={() => removeFromWishlist(product.objectID)}
+                  onClick={() => handleRemoveFromWishlist(product)}
+                  disabled={isSyncing}
                 >
                   <Heart className="h-5 w-5" fill="currentColor" />
                 </Button>
@@ -127,24 +242,21 @@ export const WishlistDrawer = ({
 };
 
 export const LikeButton = ({ product }: { product: ProductType }) => {
-  const { likedProducts, setLikedProducts } = React.useContext(WishlistContext);
-  const isLiked = likedProducts.some((p) => p.objectID === product.objectID);
+  const { isProductWishlisted, addToWishlist, removeFromWishlist, likedProducts, isSyncing } = React.useContext(WishlistContext);
+  const isLiked = isProductWishlisted(product.objectID);
 
-  const toggleLike = (e: React.MouseEvent) => {
+  const toggleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    let updatedProducts;
-    if (isLiked) {
-      updatedProducts = likedProducts.filter(
-        (p) => p.objectID !== product.objectID
-      );
-    } else {
-      updatedProducts = [...likedProducts, product];
-    }
+    // Find if this product already exists in wishlist to get its mongodbID
+    const existingProduct = likedProducts.find(p => p.objectID === product.objectID);
 
-    setLikedProducts(updatedProducts);
-    localStorage.setItem("likedProducts", JSON.stringify(updatedProducts));
+    if (isLiked && existingProduct) {
+      await removeFromWishlist(existingProduct);
+    } else {
+      await addToWishlist(product);
+    }
   };
 
   return (
@@ -164,6 +276,7 @@ export const LikeButton = ({ product }: { product: ProductType }) => {
       `}
       size="sm"
       onClick={toggleLike}
+      disabled={isSyncing}
     >
       <Heart
         className="h-4 w-4 md:h-5 md:w-5"
