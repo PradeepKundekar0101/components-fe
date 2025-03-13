@@ -26,6 +26,7 @@ import useAuthFlow from "@/store/authFlow";
 import { usePostHog } from "posthog-js/react";
 
 export type ProductType = {
+  _id?: string;
   objectID: string;
   productName: string;
   price: string;
@@ -226,14 +227,12 @@ const ComponentSearch = () => {
   }, [selectedSources, isVerified]);
 
   const totalPages = Math.ceil(totalHits / ITEMS_PER_PAGE);
-  const { likedProducts, setLikedProducts } = React.useContext(WishlistContext);
+  const { likedProducts, removeFromWishlist, isSyncing } = React.useContext(WishlistContext);
 
-  const removeFromWishlist = (productId: string) => {
-    const updatedProducts = likedProducts.filter(
-      (p) => p.objectID !== productId
-    );
-    setLikedProducts(updatedProducts);
-    localStorage.setItem("likedProducts", JSON.stringify(updatedProducts));
+  const handleRemoveFromWishlist = async (product: ProductType & { mongodbID?: string }) => {
+    if (product) {
+      await removeFromWishlist(product);
+    }
   };
 
   return (
@@ -423,7 +422,8 @@ const ComponentSearch = () => {
                         variant="ghost"
                         size="sm"
                         className="absolute top-2 right-2 h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => removeFromWishlist(product.objectID)}
+                        onClick={() => handleRemoveFromWishlist(product)}
+                        disabled={isSyncing}
                       >
                         <Heart className="h-5 w-5" fill="currentColor" />
                       </Button>
