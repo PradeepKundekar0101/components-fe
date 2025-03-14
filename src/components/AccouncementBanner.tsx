@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import {
   Smartphone,
@@ -9,8 +10,9 @@ import InstallationGuide from './InstallationGuide';
 
 const AnnouncementBanner: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
-  const [showBanner, setShowBanner] = useState(true);
+  const [showBanner, setShowBanner] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { isVerified } = useSelector((state: any) => state.auth);
 
   useEffect(() => {
     const checkDeviceType = () => {
@@ -20,14 +22,20 @@ const AnnouncementBanner: React.FC = () => {
     checkDeviceType();
     window.addEventListener('resize', checkDeviceType);
 
-    // Check if banner has been dismissed
-    const bannerDismissed = localStorage.getItem('bannerDismissed') === 'true';
-    setShowBanner(!bannerDismissed);
+    // Only show the banner if user is logged in
+    if (isVerified) {
+      // Check if banner has been dismissed
+      const bannerDismissed = localStorage.getItem('bannerDismissed') === 'true';
+      setShowBanner(!bannerDismissed);
+    } else {
+      // Hide banner if user is not logged in
+      setShowBanner(false);
+    }
 
     return () => {
       window.removeEventListener('resize', checkDeviceType);
     };
-  }, []);
+  }, [isVerified]); // Add isVerified as dependency to re-run when auth state changes
 
   const handleDismiss = () => {
     setShowBanner(false);
