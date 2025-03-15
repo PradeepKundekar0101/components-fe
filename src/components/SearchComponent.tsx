@@ -21,7 +21,7 @@ import FeatureCards from "./FeatureCards";
 import BrandList from "./BrandList";
 // import { usePostHog } from "posthog-js/react";
 import { useSearchParams } from "react-router-dom";
-import { useSelector } from 'react-redux';
+import { useSelector } from "react-redux";
 import useAuthFlow from "@/store/authFlow";
 import { usePostHog } from "posthog-js/react";
 
@@ -76,20 +76,44 @@ const ComponentSearch = () => {
         return;
       }
 
-      // Increment search count in localStorage
-      let searchCount = parseInt(localStorage.getItem("searchCount") || "0", 10);
-      searchCount += 1;
-      localStorage.setItem("searchCount", searchCount.toString());
+      // Only count complete search keywords (not just character inputs)
+      // Store searched keywords in localStorage and count unique ones
+      const normalizedQuery = searchQuery.toLowerCase().trim();
 
-      // Show login modal only if user has searched 3 or more times and is not authenticated
-      if (searchCount >= 3 && !isVerified) {
+      if (normalizedQuery.length > 0) {
+        // Get previously searched keywords from localStorage
+        const searchedKeywords = JSON.parse(
+          localStorage.getItem("searchedKeywords") || "[]"
+        );
+
+        // Check if this is a new unique keyword
+        if (!searchedKeywords.includes(normalizedQuery)) {
+          // Add the new keyword to the array
+          searchedKeywords.push(normalizedQuery);
+          localStorage.setItem(
+            "searchedKeywords",
+            JSON.stringify(searchedKeywords)
+          );
+
+          // Update the search count based on unique keywords count
+          localStorage.setItem(
+            "searchCount",
+            searchedKeywords.length.toString()
+          );
+        }
+      }
+
+      // Show login modal only if user has searched 3 or more unique keywords and is not authenticated
+      const currentSearchCount = parseInt(
+        localStorage.getItem("searchCount") || "0",
+        10
+      );
+      if (currentSearchCount >= 3 && !isVerified) {
         const authFlow = useAuthFlow.getState();
         const user = localStorage.getItem("user");
         if (authFlow.currentModal === "null" && user === null) {
           authFlow.setModal("login");
         }
-
-        return;
       }
 
       const allowedSources = sites
@@ -133,7 +157,6 @@ const ComponentSearch = () => {
         { signal }
       );
 
-      const normalizedQuery = searchQuery.toLowerCase().trim();
       posthog.capture("search_query", {
         query: normalizedQuery,
         $set: {
@@ -146,10 +169,8 @@ const ComponentSearch = () => {
       const fetchedResults = response.data.hits;
       setResults(fetchedResults);
       setTotalHits(response.data.nbHits);
-
-
     } catch (error) {
-      console.log(error)
+      console.log(error);
       if (axios.isCancel(error)) {
         console.log("Request cancelled");
       } else {
@@ -159,7 +180,6 @@ const ComponentSearch = () => {
       setIsLoading(false);
     }
   };
-
 
   const debouncedSearch = useCallback(
     debounce((searchQuery: string, page: number, signal?: AbortSignal) => {
@@ -204,8 +224,6 @@ const ComponentSearch = () => {
     debouncedSearch(query, newPage, abortControllerRef.current.signal);
   };
 
-
-
   React.useEffect(() => {
     return () => {
       if (abortControllerRef.current) {
@@ -227,9 +245,12 @@ const ComponentSearch = () => {
   }, [selectedSources, isVerified]);
 
   const totalPages = Math.ceil(totalHits / ITEMS_PER_PAGE);
-  const { likedProducts, removeFromWishlist, isSyncing } = React.useContext(WishlistContext);
+  const { likedProducts, removeFromWishlist, isSyncing } =
+    React.useContext(WishlistContext);
 
-  const handleRemoveFromWishlist = async (product: ProductType & { mongodbID?: string }) => {
+  const handleRemoveFromWishlist = async (
+    product: ProductType & { mongodbID?: string }
+  ) => {
     if (product) {
       await removeFromWishlist(product);
     }
