@@ -21,11 +21,12 @@ import FeatureCards from "./FeatureCards";
 import BrandList from "./BrandList";
 // import { usePostHog } from "posthog-js/react";
 import { useSearchParams } from "react-router-dom";
-import { useSelector } from 'react-redux';
+import { useSelector } from "react-redux";
 import useAuthFlow from "@/store/authFlow";
 import { usePostHog } from "posthog-js/react";
 
 export type ProductType = {
+  _id?: string;
   objectID: string;
   productName: string;
   price: string;
@@ -53,6 +54,59 @@ const ComponentSearch = () => {
   const isVerified = useSelector((state: any) => state.auth.isVerified);
   const posthog = usePostHog();
 
+  // Check if user has been on the site for 3 minutes before showing login popup
+  React.useEffect(() => {
+    // Only proceed if user is not verified
+    if (!isVerified) {
+      // Get or set the first visit timestamp
+      const firstVisitTime = localStorage.getItem("firstVisitTime");
+
+      if (!firstVisitTime) {
+        // First time visit, set the timestamp
+        localStorage.setItem("firstVisitTime", Date.now().toString());
+      }
+
+      // Setup a timer to check elapsed time every 30 seconds
+      const timer = setInterval(() => {
+        const storedTime = localStorage.getItem("firstVisitTime");
+        if (storedTime) {
+          // Check if 3 minutes (180000ms) have passed
+          const timeElapsed = Date.now() - parseInt(storedTime);
+
+          if (timeElapsed >= 180000) {
+            // 3 minutes have passed, show login modal
+            const authFlow = useAuthFlow.getState();
+            const user = localStorage.getItem("user");
+
+            if (authFlow.currentModal === "null" && user === null) {
+              authFlow.setModal("login");
+
+              // Clear the interval after showing the modal
+              clearInterval(timer);
+            }
+          }
+        }
+      }, 30000); // Check every 30 seconds
+
+      // Also check immediately when component mounts
+      const storedTime = localStorage.getItem("firstVisitTime");
+      if (storedTime) {
+        const timeElapsed = Date.now() - parseInt(storedTime);
+        if (timeElapsed >= 180000) {
+          const authFlow = useAuthFlow.getState();
+          const user = localStorage.getItem("user");
+
+          if (authFlow.currentModal === "null" && user === null) {
+            authFlow.setModal("login");
+          }
+        }
+      }
+
+      // Cleanup the interval when component unmounts
+      return () => clearInterval(timer);
+    }
+  }, [isVerified]);
+
   const algoliaClient = axios.create({
     baseURL: `https://${import.meta.env.VITE_ALGOLIA_APP_ID}-dsn.algolia.net`,
     headers: {
@@ -75,21 +129,34 @@ const ComponentSearch = () => {
         return;
       }
 
-      // Increment search count in localStorage
-      let searchCount = parseInt(localStorage.getItem("searchCount") || "0", 10);
-      searchCount += 1;
-      localStorage.setItem("searchCount", searchCount.toString());
+      // Only count complete search keywords (not just character inputs)
+      // Store searched keywords in localStorage and count unique ones
+      const normalizedQuery = searchQuery.toLowerCase().trim();
 
-      // Show login modal only if user has searched 3 or more times and is not authenticated
-      if (searchCount >= 3 && !isVerified) {
-        const authFlow = useAuthFlow.getState();
-        const user = localStorage.getItem("user");
-        if (authFlow.currentModal === "null" && user === null) {
-          authFlow.setModal("login");
+      if (normalizedQuery.length > 0) {
+        // Get previously searched keywords from localStorage
+        const searchedKeywords = JSON.parse(
+          localStorage.getItem("searchedKeywords") || "[]"
+        );
+
+        // Check if this is a new unique keyword
+        if (!searchedKeywords.includes(normalizedQuery)) {
+          // Add the new keyword to the array
+          searchedKeywords.push(normalizedQuery);
+          localStorage.setItem(
+            "searchedKeywords",
+            JSON.stringify(searchedKeywords)
+          );
+
+          // Update the search count based on unique keywords count
+          localStorage.setItem(
+            "searchCount",
+            searchedKeywords.length.toString()
+          );
         }
-
-        return;
       }
+
+      // The login popup is now handled by the useEffect hook that checks time
 
       const allowedSources = sites
         .filter((site) => site.isAllowed)
@@ -132,7 +199,6 @@ const ComponentSearch = () => {
         { signal }
       );
 
-      const normalizedQuery = searchQuery.toLowerCase().trim();
       posthog.capture("search_query", {
         query: normalizedQuery,
         $set: {
@@ -145,10 +211,8 @@ const ComponentSearch = () => {
       const fetchedResults = response.data.hits;
       setResults(fetchedResults);
       setTotalHits(response.data.nbHits);
-
-
     } catch (error) {
-      console.log(error)
+      console.log(error);
       if (axios.isCancel(error)) {
         console.log("Request cancelled");
       } else {
@@ -158,7 +222,6 @@ const ComponentSearch = () => {
       setIsLoading(false);
     }
   };
-
 
   const debouncedSearch = useCallback(
     debounce((searchQuery: string, page: number, signal?: AbortSignal) => {
@@ -203,8 +266,6 @@ const ComponentSearch = () => {
     debouncedSearch(query, newPage, abortControllerRef.current.signal);
   };
 
-
-
   React.useEffect(() => {
     return () => {
       if (abortControllerRef.current) {
@@ -226,14 +287,15 @@ const ComponentSearch = () => {
   }, [selectedSources, isVerified]);
 
   const totalPages = Math.ceil(totalHits / ITEMS_PER_PAGE);
-  const { likedProducts, setLikedProducts } = React.useContext(WishlistContext);
+  const { likedProducts, removeFromWishlist, isSyncing } =
+    React.useContext(WishlistContext);
 
-  const removeFromWishlist = (productId: string) => {
-    const updatedProducts = likedProducts.filter(
-      (p) => p.objectID !== productId
-    );
-    setLikedProducts(updatedProducts);
-    localStorage.setItem("likedProducts", JSON.stringify(updatedProducts));
+  const handleRemoveFromWishlist = async (
+    product: ProductType & { mongodbID?: string }
+  ) => {
+    if (product) {
+      await removeFromWishlist(product);
+    }
   };
 
   return (
@@ -423,7 +485,8 @@ const ComponentSearch = () => {
                         variant="ghost"
                         size="sm"
                         className="absolute top-2 right-2 h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => removeFromWishlist(product.objectID)}
+                        onClick={() => handleRemoveFromWishlist(product)}
+                        disabled={isSyncing}
                       >
                         <Heart className="h-5 w-5" fill="currentColor" />
                       </Button>

@@ -10,6 +10,7 @@ import {
   Download,
 } from 'lucide-react';
 import { DialogTitle } from '@radix-ui/react-dialog';
+import { useSelector } from 'react-redux';
 
 interface InstallationGuideProps {
   initialOpen?: boolean;
@@ -22,6 +23,7 @@ const InstallationGuide: React.FC<InstallationGuideProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(initialOpen);
   const [isMobile, setIsMobile] = useState(false);
+  const { isVerified } = useSelector((state: any) => state.auth);
 
   useEffect(() => {
     const checkDeviceType = () => {
@@ -31,20 +33,20 @@ const InstallationGuide: React.FC<InstallationGuideProps> = ({
     checkDeviceType();
     window.addEventListener('resize', checkDeviceType);
 
-    // Only show first-time if not explicitly opened
-    if (!initialOpen) {
-      const hasVisitedBefore = localStorage.getItem('firstVisit') === 'false';
+    // Check if user is logged in (verified) and hasn't seen the modal before
+    if (isVerified) {
+      const hasSeenInstallGuide = localStorage.getItem('hasSeenInstallGuide') === 'true';
 
-      if (!hasVisitedBefore) {
+      if (!hasSeenInstallGuide) {
         setIsModalOpen(true);
-        localStorage.setItem('firstVisit', 'false');
+        localStorage.setItem('hasSeenInstallGuide', 'true');
       }
     }
 
     return () => {
       window.removeEventListener('resize', checkDeviceType);
     };
-  }, [initialOpen]);
+  }, [isVerified]);
 
   const handleClose = () => {
     setIsModalOpen(false);

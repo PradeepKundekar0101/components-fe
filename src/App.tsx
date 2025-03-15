@@ -12,11 +12,10 @@ import ModalController from "./components/AuthModals/ModalController";
 function App() {
   return (
     <>
-      <ToastContainer />
-      <InstallationGuide />
-      <AccouncementBanner />
-
       <Provider store={store}>
+        <ToastContainer />
+        <InstallationGuide />
+        <AccouncementBanner />
         <ModalController />
         <WishlistProvider>
           <Navbar />
