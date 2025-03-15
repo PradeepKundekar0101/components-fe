@@ -202,6 +202,7 @@ const ComponentSearch = () => {
       posthog.capture("search_query", {
         query: normalizedQuery,
         source: "website",
+        $current_url: normalizedQuery,
         $set: {
           [`search_count_${normalizedQuery}`]: {
             $increment: 1,
