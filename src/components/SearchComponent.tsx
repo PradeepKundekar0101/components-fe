@@ -54,6 +54,59 @@ const ComponentSearch = () => {
   const isVerified = useSelector((state: any) => state.auth.isVerified);
   const posthog = usePostHog();
 
+  // Check if user has been on the site for 3 minutes before showing login popup
+  React.useEffect(() => {
+    // Only proceed if user is not verified
+    if (!isVerified) {
+      // Get or set the first visit timestamp
+      const firstVisitTime = localStorage.getItem("firstVisitTime");
+
+      if (!firstVisitTime) {
+        // First time visit, set the timestamp
+        localStorage.setItem("firstVisitTime", Date.now().toString());
+      }
+
+      // Setup a timer to check elapsed time every 30 seconds
+      const timer = setInterval(() => {
+        const storedTime = localStorage.getItem("firstVisitTime");
+        if (storedTime) {
+          // Check if 3 minutes (180000ms) have passed
+          const timeElapsed = Date.now() - parseInt(storedTime);
+
+          if (timeElapsed >= 180000) {
+            // 3 minutes have passed, show login modal
+            const authFlow = useAuthFlow.getState();
+            const user = localStorage.getItem("user");
+
+            if (authFlow.currentModal === "null" && user === null) {
+              authFlow.setModal("login");
+
+              // Clear the interval after showing the modal
+              clearInterval(timer);
+            }
+          }
+        }
+      }, 30000); // Check every 30 seconds
+
+      // Also check immediately when component mounts
+      const storedTime = localStorage.getItem("firstVisitTime");
+      if (storedTime) {
+        const timeElapsed = Date.now() - parseInt(storedTime);
+        if (timeElapsed >= 180000) {
+          const authFlow = useAuthFlow.getState();
+          const user = localStorage.getItem("user");
+
+          if (authFlow.currentModal === "null" && user === null) {
+            authFlow.setModal("login");
+          }
+        }
+      }
+
+      // Cleanup the interval when component unmounts
+      return () => clearInterval(timer);
+    }
+  }, [isVerified]);
+
   const algoliaClient = axios.create({
     baseURL: `https://${import.meta.env.VITE_ALGOLIA_APP_ID}-dsn.algolia.net`,
     headers: {
@@ -103,18 +156,7 @@ const ComponentSearch = () => {
         }
       }
 
-      // Show login modal only if user has searched 3 or more unique keywords and is not authenticated
-      const currentSearchCount = parseInt(
-        localStorage.getItem("searchCount") || "0",
-        10
-      );
-      if (currentSearchCount >= 3 && !isVerified) {
-        const authFlow = useAuthFlow.getState();
-        const user = localStorage.getItem("user");
-        if (authFlow.currentModal === "null" && user === null) {
-          authFlow.setModal("login");
-        }
-      }
+      // The login popup is now handled by the useEffect hook that checks time
 
       const allowedSources = sites
         .filter((site) => site.isAllowed)
