@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { useSelector } from 'react-redux';
+import useAuthFlow from '@/store/authFlow';
 
 interface InstallationGuideProps {
   initialOpen?: boolean;
@@ -24,6 +25,7 @@ const InstallationGuide: React.FC<InstallationGuideProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(initialOpen);
   const [isMobile, setIsMobile] = useState(false);
   const { isVerified } = useSelector((state: any) => state.auth);
+  const { currentModal } = useAuthFlow();
 
   useEffect(() => {
     const checkDeviceType = () => {
@@ -34,7 +36,7 @@ const InstallationGuide: React.FC<InstallationGuideProps> = ({
     window.addEventListener('resize', checkDeviceType);
 
     // Check if user is logged in (verified) and hasn't seen the modal before
-    if (isVerified) {
+    if (isVerified && currentModal === 'null') {
       const hasSeenInstallGuide = localStorage.getItem('hasSeenInstallGuide') === 'true';
 
       if (!hasSeenInstallGuide) {
