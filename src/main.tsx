@@ -4,6 +4,8 @@ import "./index.css";
 import App from "./App.tsx";
 import { PostHogProvider } from "posthog-js/react";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
+
+
 const options = {
   api_host: import.meta.env.VITE_POSTHOG_HOST,
 };

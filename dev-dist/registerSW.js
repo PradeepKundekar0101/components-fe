@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/components-radar/dev-sw.js?dev-sw', { scope: '/components-radar/', type: 'classic' })
