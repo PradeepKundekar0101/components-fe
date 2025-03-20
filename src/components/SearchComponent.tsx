@@ -317,7 +317,7 @@ const ComponentSearch = () => {
                     <SearchIcon />
                   </div>
                   <h1 className="text-red-600 text-md md:text-2xl font-semibold">
-                    Components Radar
+                    Components 
                   </h1>
                 </div>
                 <div className="flex items-center gap-2">
