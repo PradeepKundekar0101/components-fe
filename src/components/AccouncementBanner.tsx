@@ -22,19 +22,15 @@ const AnnouncementBanner: React.FC = () => {
     checkDeviceType();
     window.addEventListener('resize', checkDeviceType);
 
-      const user =localStorage.getItem('user');
-      if(user){
-        setShowBanner(false);
-        localStorage.setItem('bannerDismissed', 'true');
-      }
+    const bannerDismissed = localStorage.getItem('bannerDismissed') === 'true';
 
     if (isVerified) {
-      // Always show the banner when a user logs in
-      setShowBanner(true);
+      // Show the banner when the user logs in, unless they previously dismissed it
+      setShowBanner(!bannerDismissed);
     } else {
-      // Clear the banner dismissed flag when user logs out
+      // When the user logs out, reset banner dismissal and show the banner
       localStorage.removeItem('bannerDismissed');
-      setShowBanner(false);
+      setShowBanner(true);
     }
 
     return () => {
