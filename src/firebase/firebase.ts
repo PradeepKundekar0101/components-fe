@@ -3,12 +3,12 @@ import { initializeApp } from "firebase/app";
 import { getMessaging,getToken } from "firebase/messaging";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCWnJT6EgP5Gw-5O0QA1hFyQw4ATFRiyeo",
-  authDomain: "notifications-a7548.firebaseapp.com",
-  projectId: "notifications-a7548",
-  storageBucket: "notifications-a7548.appspot.com",
-  messagingSenderId: "1032056771132",
-  appId: "1:1032056771132:web:be79bfd38f3c48c2c7e939"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 // Initialize Firebase
@@ -23,7 +23,7 @@ export const generateToken = async () => {
     if (permission === "granted") {
       const registration = await navigator.serviceWorker.register("/components-radar/firebase-messaging-sw.js");
       const token = await getToken(messaging, {
-        vapidKey: "BLU9HuBDwlIs8n_2HjqeMucje__cDFMJDEVrXOwVPTD-9h5klNEhEPTJfkctiLhEARF9zY2cvhc2TQxIaamlouA",
+        vapidKey:import.meta.env.VITE_FIREBASE_VAPID_KEY,
         serviceWorkerRegistration: registration,
       });
 

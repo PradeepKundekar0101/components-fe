@@ -1,9 +1,7 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useRef, useEffect } from "react";
 import {
   Search,
   SearchIcon,
-  ChevronLeft,
-  ChevronRight,
   Heart,
   ShoppingCart,
 } from "lucide-react";
@@ -19,7 +17,6 @@ import { sites } from "@/config";
 import { WishlistContext, WishlistDrawer } from "./Wishlist";
 import FeatureCards from "./FeatureCards";
 import BrandList from "./BrandList";
-// import { usePostHog } from "posthog-js/react";
 import { useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import useAuthFlow from "@/store/authFlow";
@@ -39,7 +36,8 @@ export type ProductType = {
   productImage?: string;
 };
 
-const ITEMS_PER_PAGE = 10;
+// Fetch all results at once
+const MAX_RESULTS = 1000; // Set a reasonable maximum
 const allSourceIds = sources.map((source) => source.id);
 
 const ComponentSearch = () => {
@@ -49,10 +47,12 @@ const ComponentSearch = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSources, setSelectedSources] =
     useState<string[]>(allSourceIds);
-  const [currentPage, setCurrentPage] = useState(0);
   const [totalHits, setTotalHits] = useState(0);
   const isVerified = useSelector((state: any) => state.auth.isVerified);
   const posthog = usePostHog();
+  
+  // For infinite scrolling detection
+  const resultsContainerRef = useRef<HTMLDivElement>(null);
 
   // Check if user has been on the site for 3 minutes before showing login popup
   React.useEffect(() => {
@@ -114,12 +114,11 @@ const ComponentSearch = () => {
       "X-Algolia-API-Key": import.meta.env.VITE_ALGOLIA_API_KEY,
       "Content-Type": "application/json",
     },
-    timeout: 5000,
+    timeout: 10000, // Increased timeout for larger requests
   });
 
   const handleSearch = async (
     searchQuery: string,
-    page: number,
     signal?: AbortSignal
   ) => {
     try {
@@ -156,8 +155,6 @@ const ComponentSearch = () => {
         }
       }
 
-      // The login popup is now handled by the useEffect hook that checks time
-
       const allowedSources = sites
         .filter((site) => site.isAllowed)
         .map((site) => site.name);
@@ -175,6 +172,7 @@ const ComponentSearch = () => {
       const filters = [];
       filters.push(`source:${selectedAllowedSources.join(" OR source:")}`);
 
+      // Fetch all results in one request
       const response = await algoliaClient.post(
         `/1/indexes/Products/query`,
         {
@@ -193,8 +191,7 @@ const ComponentSearch = () => {
             "sourceImage",
           ],
           distinct: true,
-          hitsPerPage: ITEMS_PER_PAGE,
-          page,
+          hitsPerPage: MAX_RESULTS,
         },
         { signal }
       );
@@ -226,10 +223,10 @@ const ComponentSearch = () => {
   };
 
   const debouncedSearch = useCallback(
-    debounce((searchQuery: string, page: number, signal?: AbortSignal) => {
+    debounce((searchQuery: string, signal?: AbortSignal) => {
       if (searchQuery.trim() !== "") {
         setIsLoading(true);
-        handleSearch(searchQuery, page, signal);
+        handleSearch(searchQuery, signal);
       } else {
         setResults([]);
         setTotalHits(0);
@@ -244,7 +241,6 @@ const ComponentSearch = () => {
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const searchQuery = event.target.value;
     setQuery(searchQuery);
-    setCurrentPage(0); // Reset to first page on new search
 
     // Update URL query parameters
     setSearchQuery(searchQuery ? { q: searchQuery } : {});
@@ -254,18 +250,7 @@ const ComponentSearch = () => {
     }
 
     abortControllerRef.current = new AbortController();
-    debouncedSearch(searchQuery, 0, abortControllerRef.current.signal);
-  };
-
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    abortControllerRef.current = new AbortController();
-    debouncedSearch(query, newPage, abortControllerRef.current.signal);
+    debouncedSearch(searchQuery, abortControllerRef.current.signal);
   };
 
   React.useEffect(() => {
@@ -279,16 +264,14 @@ const ComponentSearch = () => {
 
   React.useEffect(() => {
     if (query.trim() !== "") {
-      setCurrentPage(0);
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
       abortControllerRef.current = new AbortController();
-      debouncedSearch(query, 0, abortControllerRef.current.signal);
+      debouncedSearch(query, abortControllerRef.current.signal);
     }
   }, [selectedSources, isVerified]);
 
-  const totalPages = Math.ceil(totalHits / ITEMS_PER_PAGE);
   const { likedProducts, removeFromWishlist, isSyncing } =
     React.useContext(WishlistContext);
 
@@ -353,7 +336,7 @@ const ComponentSearch = () => {
                   <BrandList />
                 </>
               ) : (
-                <div className="h-full">
+                <div className="h-full" ref={resultsContainerRef}>
                   {isLoading && (
                     <div className="space-y-2 md:space-y-4">
                       {[...Array(6)].map((_, index) => (
@@ -377,13 +360,10 @@ const ComponentSearch = () => {
                           <h1 className="text-gray-600 text-xl font-semibold">
                             {totalHits} results found
                           </h1>
-                          <div className="text-sm text-gray-500">
-                            Page {currentPage + 1} of {totalPages}
-                          </div>
                         </div>
                       )}
 
-                      <div className="space-y-2 md:space-y-4">
+                      <div className="space-y-2 md:space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
                         {results.map((product: ProductType) => (
                           <ProductItem
                             key={product.objectID}
@@ -393,61 +373,7 @@ const ComponentSearch = () => {
                         ))}
                       </div>
 
-                      {results.length > 0 && (
-                        <div className="flex justify-center gap-2 mt-6 pb-6">
-                          <Button
-                            variant="outline"
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 0}
-                            className="flex items-center gap-1"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                            Previous
-                          </Button>
-
-                          <div className="flex items-center gap-1">
-                            {[...Array(Math.min(5, totalPages))].map(
-                              (_, index) => {
-                                let pageNumber = 0;
-                                if (totalPages <= 5) {
-                                  pageNumber = index;
-                                } else if (currentPage <= 2) {
-                                  pageNumber = index;
-                                } else if (currentPage >= totalPages - 3) {
-                                  pageNumber = totalPages - 5 + index;
-                                } else {
-                                  pageNumber = currentPage - 2 + index;
-                                }
-
-                                return (
-                                  <Button
-                                    key={pageNumber}
-                                    variant={
-                                      currentPage === pageNumber
-                                        ? "default"
-                                        : "outline"
-                                    }
-                                    onClick={() => handlePageChange(pageNumber)}
-                                    className="w-10"
-                                  >
-                                    {pageNumber + 1}
-                                  </Button>
-                                );
-                              }
-                            )}
-                          </div>
-
-                          <Button
-                            variant="outline"
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage >= totalPages - 1}
-                            className="flex items-center gap-1"
-                          >
-                            Next
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
+                      
                     </div>
                   )}
                 </div>
@@ -517,4 +443,4 @@ const ComponentSearch = () => {
   );
 };
 
-export default ComponentSearch;
+export default ComponentSearch; 

@@ -13,7 +13,7 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  console.log("📩 Background Message Received:", payload);
+  console.log(" Background Message Received:", payload);
   if (payload.notification) {
     self.registration.showNotification(payload.notification.title, {
       body: payload.notification.body,
@@ -25,11 +25,11 @@ messaging.onBackgroundMessage((payload) => {
 });
 
 self.addEventListener('push', function(event) {
-  console.log('📩 Push event received:', event);
+  console.log(' Push event received:', event);
   
   if (event.data) {
     const data = event.data.json();
-    console.log("📩 Push Data:", data);
+    console.log(" Push Data:", data);
 
     event.waitUntil(
       self.registration.showNotification(data.notification.title, {
@@ -38,6 +38,6 @@ self.addEventListener('push', function(event) {
       })
     );
   } else {
-    console.warn("⚠️ No data in push event");
+    console.warn(" No data in push event");
   }
 });
