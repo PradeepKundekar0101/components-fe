@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ProductType } from "./SearchComponent";
+import { ProductType } from "@/types/data";
 import ProductItem from "./ui/ProductItem";
 import { Badge } from "@/components/ui/badge";
 import { wishlistService } from "@/services/wishlistService";
@@ -28,9 +28,9 @@ export const WishlistContext = React.createContext<{
   isSyncing: boolean;
 }>({
   likedProducts: [],
-  setLikedProducts: () => { },
-  addToWishlist: async () => { },
-  removeFromWishlist: async () => { },
+  setLikedProducts: () => {},
+  addToWishlist: async () => {},
+  removeFromWishlist: async () => {},
   isProductWishlisted: () => false,
   isSyncing: false,
 });
@@ -40,7 +40,9 @@ export const WishlistProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [likedProducts, setLikedProducts] = React.useState<EnhancedProductType[]>([]);
+  const [likedProducts, setLikedProducts] = React.useState<
+    EnhancedProductType[]
+  >([]);
   const [isSyncing, setIsSyncing] = React.useState(false);
   const isAuthenticated = useSelector((state: any) => state.auth.isVerified);
 
@@ -151,7 +153,7 @@ export const WishlistProvider = ({
         addToWishlist,
         removeFromWishlist,
         isProductWishlisted,
-        isSyncing
+        isSyncing,
       }}
     >
       {children}
@@ -166,7 +168,8 @@ export const WishlistDrawer = ({
   title: string;
   showBadge: boolean;
 }) => {
-  const { likedProducts, removeFromWishlist, isSyncing } = React.useContext(WishlistContext);
+  const { likedProducts, removeFromWishlist, isSyncing } =
+    React.useContext(WishlistContext);
   const [open, setOpen] = React.useState(false);
 
   const handleRemoveFromWishlist = async (product: EnhancedProductType) => {
@@ -242,7 +245,13 @@ export const WishlistDrawer = ({
 };
 
 export const LikeButton = ({ product }: { product: ProductType }) => {
-  const { isProductWishlisted, addToWishlist, removeFromWishlist, likedProducts, isSyncing } = React.useContext(WishlistContext);
+  const {
+    isProductWishlisted,
+    addToWishlist,
+    removeFromWishlist,
+    likedProducts,
+    isSyncing,
+  } = React.useContext(WishlistContext);
   const isLiked = isProductWishlisted(product.objectID);
 
   const toggleLike = async (e: React.MouseEvent) => {
@@ -250,7 +259,9 @@ export const LikeButton = ({ product }: { product: ProductType }) => {
     e.stopPropagation();
 
     // Find if this product already exists in wishlist to get its mongodbID
-    const existingProduct = likedProducts.find(p => p.objectID === product.objectID);
+    const existingProduct = likedProducts.find(
+      (p) => p.objectID === product.objectID
+    );
 
     if (isLiked && existingProduct) {
       await removeFromWishlist(existingProduct);
@@ -266,9 +277,10 @@ export const LikeButton = ({ product }: { product: ProductType }) => {
         flex items-center justify-center
         h-6 w-6 md:h-6 md:w-6
         rounded-full p-0
-        ${isLiked
-          ? "text-white hover:text-white"
-          : "bg-white text-gray-700 hover:bg-gray-100"
+        ${
+          isLiked
+            ? "text-white hover:text-white"
+            : "bg-white text-gray-700 hover:bg-gray-100"
         }
         transition-all duration-200 ease-in-out
         transform hover:scale-105

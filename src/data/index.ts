@@ -2,12 +2,12 @@ export const sources = [
   { id: "robu", label: "Robu", logo: "components-radar/robu.png" },
   { id: "robokit", label: "Robokit", logo: "components-radar/robokit.png" },
   { id: "sunrom", label: "Sunrom", logo: "components-radar/sunrom.png" },
-  { id: "zbotic", label: "ZBotic", logo: "components-radar/zbotic.webp" },
-  { id: "evelta", label: "Evelta", logo: "components-radar/evelta.webp" },
+  { id: "zbotic", label: "ZBotic", logo: "components-radar/zbotic.png" },
+  { id: "evelta", label: "Evelta", logo: "components-radar/evelta.png" },
   {
     id: "robocraze",
     label: "Robocraze",
-    logo: "components-radar/robocraze.webp",
+    logo: "components-radar/robocraze.png",
   },
   { id: "quartz", label: "Quartz", logo: "components-radar/quartz.png" },
 ];

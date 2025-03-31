@@ -1,6 +1,6 @@
 import React from "react";
 import { ExternalLink, Info } from "lucide-react";
-import { ProductType } from "../SearchComponent";
+import { ProductType } from "@/types/data";
 import { codInformation, freeShippingAbove, shippingFee } from "@/data";
 import { LikeButton } from "../Wishlist";
 import { Button } from "./button";
@@ -22,6 +22,29 @@ const ProductItem = ({
   query: string;
   showMoreData?: boolean;
 }) => {
+  const getImageUrl = (source: string) => {
+    const basePath = import.meta.env.VITE_URL || "";
+
+    switch (source) {
+      case "quartz":
+        return `${basePath}/quartz.png`;
+      case "evelta":
+        return `${basePath}/evelta.png`;
+      case "robu":
+        return `${basePath}/robu.png`;
+      case "robocraze":
+        return `${basePath}/robocraze.png`;
+      case "robokit":
+        return `${basePath}/robokit.png`;
+      case "sunrom":
+        return `${basePath}/sunrom.png`;
+      case "zbotic":
+        return `${basePath}/zbotic.png`;
+      default:
+        return null;
+    }
+  };
+
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const isMobile = window.innerWidth < 768;
   const highlightText = (text: string, query: string) => {
@@ -82,7 +105,7 @@ const ProductItem = ({
                   Free shipping above ₹
                   {
                     freeShippingAbove[
-                    product.source as keyof typeof freeShippingAbove
+                      product.source as keyof typeof freeShippingAbove
                     ]
                   }
                 </span>
@@ -108,14 +131,15 @@ const ProductItem = ({
   return (
     <div
       key={product.objectID}
-      className={`flex gap-2 md:gap-4 p-2 md:p-4 ${showMoreData ? "border rounded-lg" : "border-b"
-        }  border-gray-200 transition-all flex-row relative`}
+      className={`flex gap-2 md:gap-4 p-2 md:p-4 ${
+        showMoreData ? "border rounded-lg" : "border-b"
+      }  border-gray-200 transition-all flex-row relative`}
     >
       {showMoreData && (
         <div className="flex flex-col gap-2 absolute top-2 right-4">
           <div className="flex w-full justify-end">
             <img
-              src={product.sourceImage}
+              src={getImageUrl(product.source) || ""}
               alt={product.source}
               className="h-6 w-20 md:h-8 md:w-28 object-contain rounded"
             />
@@ -167,8 +191,9 @@ const ProductItem = ({
 
       <div className="flex-grow">
         <h2
-          className={`font-medium mb-1 text-xs md:text-sm ${!showMoreData ? "md:pr-10 pr-8" : "md:pr-32 pr-24"
-            }`}
+          className={`font-medium mb-1 text-xs md:text-sm ${
+            !showMoreData ? "md:pr-10 pr-8" : "md:pr-32 pr-24"
+          }`}
         >
           {highlightText(
             isMobile
@@ -176,36 +201,46 @@ const ProductItem = ({
                 ? product.productName.slice(0, 30) + "..."
                 : product.productName || "Untitled Product"
               : product.productName?.length > 60
-                ? product.productName.slice(0, 60) + "..."
-                : product.productName || "Untitled Product",
+              ? product.productName.slice(0, 60) + "..."
+              : product.productName || "Untitled Product",
             query
           )}
         </h2>
 
         <div className="text-xs mb-1 rounded-none md:text-sm w-full md:w-auto flex items-center">
           <span
-            className={`rounded-full h-2 w-2 mr-1 ${stockString.toLowerCase().includes("in stock") ||
+            className={`rounded-full h-2 w-2 mr-1 ${
+              stockString.toLowerCase().includes("in stock") ||
+              stockString.toLowerCase().includes("available") ||
+              stockString.toLowerCase().includes("many") ||
               Number(product.stock) > 0
-              ? "bg-green-600"
-              : isNaN(Number(product.stock)) || Number(product.stock) === 0
+                ? "bg-green-600"
+                : isNaN(Number(product.stock)) || Number(product.stock) === 0
                 ? "bg-red-500"
                 : "bg-gray-500"
-              }`}
+            }`}
           ></span>
           <span
-            className={`${stockString.toLowerCase().includes("in stock") ||
+            className={`${
+              stockString.toLowerCase().includes("in stock") ||
+              stockString.toLowerCase().includes("available") ||
+              stockString.toLowerCase().includes("many") ||
               Number(product.stock) > 0
-              ? "!text-green-600"
-              : isNaN(Number(product.stock)) || Number(product.stock) === 0
+                ? "!text-green-600"
+                : isNaN(Number(product.stock)) || Number(product.stock) === 0
                 ? "text-red-500"
                 : "text-gray-500"
-              }`}
+            }`}
           >
-            {stockString.toLocaleLowerCase() === "out"
+            {stockString.toLowerCase().split("-").length == 3
+              ? "Unknown"
+              : stockString.toLocaleLowerCase() === "out"
               ? "Out of stock"
+              : stockString.toLowerCase().includes("many")
+              ? "In stock"
               : isNaN(Number(product.stock))
-                ? stockString.charAt(0).toUpperCase() + stockString.slice(1)
-                : `${product.stock} left`}
+              ? stockString.charAt(0).toUpperCase() + stockString.slice(1)
+              : `${product.stock} left`}
           </span>
         </div>
 
@@ -243,10 +278,11 @@ const ProductItem = ({
                     <span>Free shipping</span>
                   ) : !eligibleForFreeShipping ? (
                     <span>
-                      {` | Free above ₹${freeShippingAbove[
-                        product.source as keyof typeof freeShippingAbove
-                      ]
-                        }`}
+                      {` | Free above ₹${
+                        freeShippingAbove[
+                          product.source as keyof typeof freeShippingAbove
+                        ]
+                      }`}
                     </span>
                   ) : (
                     ""

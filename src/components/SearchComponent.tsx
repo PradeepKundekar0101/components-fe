@@ -1,10 +1,5 @@
 import { useCallback, useState, useRef, useEffect } from "react";
-import {
-  Search,
-  SearchIcon,
-  Heart,
-  ShoppingCart,
-} from "lucide-react";
+import { Search, SearchIcon, Heart, ShoppingCart, ArrowUp } from "lucide-react";
 import axios from "axios";
 import React from "react";
 import debounce from "lodash/debounce";
@@ -21,27 +16,14 @@ import { useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import useAuthFlow from "@/store/authFlow";
 import { usePostHog } from "posthog-js/react";
-
-export type ProductType = {
-  _id?: string;
-  objectID: string;
-  productName: string;
-  price: string;
-  stock: string;
-  imageUrl?: string;
-  productUrl: string;
-  category: string;
-  source: string;
-  sourceImage: string;
-  productImage?: string;
-};
+import { ProductType } from "@/types/data";
 
 // Fetch all results at once
 const MAX_RESULTS = 1000; // Set a reasonable maximum
 const allSourceIds = sources.map((source) => source.id);
 
 const ComponentSearch = () => {
-  const [searchQuery, setSearchQuery] = useSearchParams();
+  const [searchQuery, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchQuery.get("q") || "");
   const [results, setResults] = useState<ProductType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -50,7 +32,8 @@ const ComponentSearch = () => {
   const [totalHits, setTotalHits] = useState(0);
   const isVerified = useSelector((state: any) => state.auth.isVerified);
   const posthog = usePostHog();
-  
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
   // For infinite scrolling detection
   const resultsContainerRef = useRef<HTMLDivElement>(null);
 
@@ -107,6 +90,24 @@ const ComponentSearch = () => {
     }
   }, [isVerified]);
 
+  // Add scroll event listener
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      setShowScrollTop(scrollY > 400); // Show button after scrolling 400px
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
   const algoliaClient = axios.create({
     baseURL: `https://${import.meta.env.VITE_ALGOLIA_APP_ID}-dsn.algolia.net`,
     headers: {
@@ -117,10 +118,7 @@ const ComponentSearch = () => {
     timeout: 10000, // Increased timeout for larger requests
   });
 
-  const handleSearch = async (
-    searchQuery: string,
-    signal?: AbortSignal
-  ) => {
+  const handleSearch = async (searchQuery: string, signal?: AbortSignal) => {
     try {
       if (selectedSources.length === 0) {
         setResults([]);
@@ -189,6 +187,7 @@ const ComponentSearch = () => {
             "category",
             "source",
             "sourceImage",
+            "weight",
           ],
           distinct: true,
           hitsPerPage: MAX_RESULTS,
@@ -208,7 +207,28 @@ const ComponentSearch = () => {
       });
 
       const fetchedResults = response.data.hits;
-      setResults(fetchedResults);
+
+      // Sort results by weight (higher weights first, undefined weights last)
+      const sortedResults = fetchedResults.sort(
+        (a: ProductType, b: ProductType) => {
+          // If both have weights, compare them (higher first)
+          if (a.weight !== undefined && b.weight !== undefined) {
+            return b.weight - a.weight;
+          }
+          // If only a has weight, a comes first
+          if (a.weight !== undefined) {
+            return -1;
+          }
+          // If only b has weight, b comes first
+          if (b.weight !== undefined) {
+            return 1;
+          }
+          // If neither has weight, maintain original order
+          return 0;
+        }
+      );
+
+      setResults(sortedResults);
       setTotalHits(response.data.nbHits);
     } catch (error) {
       console.log(error);
@@ -243,7 +263,7 @@ const ComponentSearch = () => {
     setQuery(searchQuery);
 
     // Update URL query parameters
-    setSearchQuery(searchQuery ? { q: searchQuery } : {});
+    setSearchParams(searchQuery ? { q: searchQuery } : {});
 
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -285,6 +305,17 @@ const ComponentSearch = () => {
 
   return (
     <div className="w-full flex flex-col">
+      {/* Add Go to Top button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 bg-red-600 hover:bg-red-700 text-white p-3 rounded-full shadow-lg transition-all duration-300 z-50"
+          aria-label="Scroll to top"
+        >
+          <ArrowUp className="h-6 w-6" />
+        </button>
+      )}
+
       <div className="flex flex-row">
         <div className="w-[0%] md:w-[10%] overflow-x-hidden bg-gray-100 flex justify-center items-center">
           <div className="bg-gray-200 rounded-lg px-4 py-2 text-slate-400">
@@ -300,7 +331,7 @@ const ComponentSearch = () => {
                     <SearchIcon />
                   </div>
                   <h1 className="text-red-600 text-md md:text-2xl font-semibold">
-                    Components 
+                    Components
                   </h1>
                 </div>
                 <div className="flex items-center gap-2">
@@ -363,7 +394,7 @@ const ComponentSearch = () => {
                         </div>
                       )}
 
-                      <div className="space-y-2 md:space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+                      <div className="space-y-2 md:space-y-4  overflow-y-auto">
                         {results.map((product: ProductType) => (
                           <ProductItem
                             key={product.objectID}
@@ -372,8 +403,6 @@ const ComponentSearch = () => {
                           />
                         ))}
                       </div>
-
-                      
                     </div>
                   )}
                 </div>
@@ -443,4 +472,4 @@ const ComponentSearch = () => {
   );
 };
 
-export default ComponentSearch; 
+export default ComponentSearch;

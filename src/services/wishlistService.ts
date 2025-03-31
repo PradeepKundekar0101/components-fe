@@ -1,4 +1,4 @@
-import { ProductType } from "@/components/SearchComponent";
+import { ProductType } from "@/types/data";
 import api from "@/config/axios";
 
 export const wishlistService = {
@@ -18,10 +18,13 @@ export const wishlistService = {
     try {
       const productWithObjectID = {
         ...product,
-        objectID: product.objectID || product._id, 
+        objectID: product.objectID || product._id,
       };
-      
-      const response = await api.post("/api/v1/wishlist/add", productWithObjectID);
+
+      const response = await api.post(
+        "/api/v1/wishlist/add",
+        productWithObjectID
+      );
       return response.data;
     } catch (error) {
       console.error("Error adding product to wishlist:", error);
