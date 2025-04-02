@@ -21,6 +21,7 @@ import robocrazeLogo from "@/assets/vendors/robocraze.png";
 import robokitLogo from "@/assets/vendors/robokit.png";
 import sunromLogo from "@/assets/vendors/sunrom.png";
 import zboticLogo from "@/assets/vendors/zbotic.png";
+import { wishlistService } from "@/services/wishlistService";
 
 const ProductItem = ({
   product,
@@ -308,6 +309,9 @@ const ProductItem = ({
             <Button
               className="flex items-center border text-white bg-red-500 hover:bg-red-600 md:w-full h-6 md:h-8 text-left md:text-center md:justify-center justify-start shadow-none rounded-full px-2 md:px-3 gap-1 md:gap-2 absolute bottom-[10%] left-3 w-fit md:relative "
               size="sm"
+              onClick={() => {
+                wishlistService.increaseProductWeight(product.objectID);
+              }}
             >
               <span className="flex items-center font-semibold gap-0 md:gap-1 text-xs md:text-sm">
                 View Product

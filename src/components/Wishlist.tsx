@@ -18,7 +18,6 @@ export type EnhancedProductType = ProductType & {
   mongodbID?: string;
 };
 
-// Create a context to manage wishlist state globally
 export const WishlistContext = React.createContext<{
   likedProducts: EnhancedProductType[];
   setLikedProducts: React.Dispatch<React.SetStateAction<EnhancedProductType[]>>;
@@ -112,7 +111,7 @@ export const WishlistProvider = ({
         setLikedProducts(updatedProducts);
         localStorage.setItem("likedProducts", JSON.stringify(updatedProducts));
       } else {
-        // Not authenticated, just update localStorage
+        await wishlistService.increaseProductWeight(product.objectID);
         const updatedProducts = [...likedProducts, product];
         setLikedProducts(updatedProducts);
         localStorage.setItem("likedProducts", JSON.stringify(updatedProducts));

@@ -32,6 +32,19 @@ export const wishlistService = {
     }
   },
 
+  // Increase product weight
+  increaseProductWeight: async (objectID: string) => {
+    try {
+      const response = await api.post(`/api/v1/wishlist/increaseWeight`, {
+        objectID,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error increasing product weight:", error);
+      throw error;
+    }
+  },
+
   // Delete product from user's wishlist
   deleteWishlist: async (mongodbID: string) => {
     try {
