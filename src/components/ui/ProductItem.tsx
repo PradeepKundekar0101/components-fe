@@ -23,23 +23,21 @@ const ProductItem = ({
   showMoreData?: boolean;
 }) => {
   const getImageUrl = (source: string) => {
-    const basePath = import.meta.env.VITE_URL || "";
-
     switch (source) {
       case "quartz":
-        return `${basePath}/quartz.png`;
+        return "/quartz.png";
       case "evelta":
-        return `${basePath}/evelta.png`;
+        return "/evelta.png";
       case "robu":
-        return `${basePath}/robu.png`;
+        return "/robu.png";
       case "robocraze":
-        return `${basePath}/robocraze.png`;
+        return "/robocraze.png";
       case "robokit":
-        return `${basePath}/robokit.png`;
+        return "/robokit.png";
       case "sunrom":
-        return `${basePath}/sunrom.png`;
+        return "/sunrom.png";
       case "zbotic":
-        return `${basePath}/zbotic.png`;
+        return "/zbotic.png";
       default:
         return null;
     }
