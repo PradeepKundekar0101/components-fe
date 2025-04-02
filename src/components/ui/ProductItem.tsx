@@ -13,6 +13,15 @@ import {
   DialogTrigger,
 } from "./dialog";
 
+// Import vendor images
+import quartzLogo from "@/assets/vendors/quartz.png";
+import eveltaLogo from "@/assets/vendors/evelta.png";
+import robuLogo from "@/assets/vendors/robu.png";
+import robocrazeLogo from "@/assets/vendors/robocraze.png";
+import robokitLogo from "@/assets/vendors/robokit.png";
+import sunromLogo from "@/assets/vendors/sunrom.png";
+import zboticLogo from "@/assets/vendors/zbotic.png";
+
 const ProductItem = ({
   product,
   query,
@@ -25,19 +34,19 @@ const ProductItem = ({
   const getImageUrl = (source: string) => {
     switch (source) {
       case "quartz":
-        return "/quartz.png";
+        return quartzLogo;
       case "evelta":
-        return "/evelta.png";
+        return eveltaLogo;
       case "robu":
-        return "/robu.png";
+        return robuLogo;
       case "robocraze":
-        return "/robocraze.png";
+        return robocrazeLogo;
       case "robokit":
-        return "/robokit.png";
+        return robokitLogo;
       case "sunrom":
-        return "/sunrom.png";
+        return sunromLogo;
       case "zbotic":
-        return "/zbotic.png";
+        return zboticLogo;
       default:
         return null;
     }
